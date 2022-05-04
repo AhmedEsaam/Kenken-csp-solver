@@ -125,15 +125,15 @@ def drawTile(tilex, tiley, game, adjx=0, adjy=0):
     left, top = getLeftTopOfTile(tilex, tiley)
     pygame.draw.rect(DISPLAYSURF, TILECOLOR, (left + adjx, top + adjy, TILESIZE, TILESIZE))
     # number in the tile
-    textSurf = BASICFONT.render(str(game[GAMESIZE-tilex-1][GAMESIZE-tiley-1]), True, TEXTCOLOR)
+    textSurf = BASICFONT.render(str(game[tiley][tilex]), True, TEXTCOLOR)
     textRect = textSurf.get_rect()
     textRect.center = left + int(TILESIZE / 2) + adjx, top + int(TILESIZE / 2) + adjy
     # constraint in the top left
-    constSurf = SECFONT.render(str(game[GAMESIZE-tilex-1][GAMESIZE-tiley-1]), True, TEXTCOLOR)
+    constSurf = SECFONT.render(str(game[tiley][tilex]), True, TEXTCOLOR)
     constRect = constSurf.get_rect()
     constRect.center = left + 11 + adjx, top + 11 + adjy
 
-    pygame.draw.line(DISPLAYSURF, BORDERCOLOR, (left, top),  (left, top + TILESIZE), 3)
+    # pygame.draw.line(DISPLAYSURF, BORDERCOLOR, (left, top),  (left, top + TILESIZE), 3)
 
     DISPLAYSURF.blit(textSurf, textRect)
     DISPLAYSURF.blit(constSurf, constRect)
@@ -148,12 +148,13 @@ def makeText(text, color, bgcolor, top, left):
 def drawBoard(n):
     # Generate random game
     game = gameGenerator(n)
-    print(game)
+    # print(game)
+    for i in game:
+        print(i)
 
-    p = cagesCreator(n)
-    print(p)
+    cages = cagesCreator(n)
+    print(cages)
     
-
     DISPLAYSURF.fill(OFFGREEN)
     # if message:
     #     textSurf, textRect = makeText(message, MESSAGECOLOR, BGCOLOR, 5, 5)
@@ -161,6 +162,28 @@ def drawBoard(n):
     for tilex in range(n):
         for tiley in range(n):
             drawTile(tilex, tiley, game)
+
+    for cage in cages:
+        for tile in cage:
+            tilex = tile[0]
+            tiley = tile[1]
+            left, top = getLeftTopOfTile(tiley-1,tilex-1)
+            left = left -1
+            top = top -1
+            if [tilex,tiley-1] not in cage :
+                pygame.draw.line(DISPLAYSURF, BORDERCOLOR, (left, top),  (left, top + TILESIZE), 3) #left
+            if [tilex-1,tiley] not in cage :
+                pygame.draw.line(DISPLAYSURF, BORDERCOLOR, (left, top),  (left + TILESIZE, top), 3) #top
+            if [tilex+1,tiley] not in cage :
+                pygame.draw.line(DISPLAYSURF, BORDERCOLOR, (left + TILESIZE, top + TILESIZE),  (left , top + TILESIZE), 3) #bottom
+            if [tilex,tiley+1] not in cage :
+                pygame.draw.line(DISPLAYSURF, BORDERCOLOR, (left + TILESIZE, top + TILESIZE),  (left + TILESIZE , top), 3) #right
+                
+                
+    # pygame.draw.line(DISPLAYSURF, BORDERCOLOR, (left, top),  (left, top + TILESIZE), 3) #left
+    # pygame.draw.line(DISPLAYSURF, BORDERCOLOR, (left, top),  (left + TILESIZE, top), 3) #top
+    # pygame.draw.line(DISPLAYSURF, BORDERCOLOR, (left + TILESIZE, top + TILESIZE),  (left , top + TILESIZE), 3) #bottom
+    # pygame.draw.line(DISPLAYSURF, BORDERCOLOR, (left + TILESIZE, top + TILESIZE),  (left + TILESIZE , top), 3) #right
 
     # left, top = getLeftTopOfTile(0, 0)
     # width = BOARDWIDTH * TILESIZE
