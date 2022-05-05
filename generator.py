@@ -33,7 +33,7 @@ TILECOLOR = WHITE
 TEXTCOLOR = BLACK
 BORDERCOLOR = GREEN
 BASICFONTSIZE = 20
-SECFONTSIZE = 13
+SECFONTSIZE = 14
 TEXT = GREEN
 
 BUTTONCOLOR = WHITE
@@ -54,11 +54,11 @@ def main():
     global DISPLAYSURF, BASICFONT, SECFONT, RESET_SURF, RESET_RECT, NEW_SURF, NEW_RECT, SOLVE_SURF, SOLVE_RECT, GAMESIZE
 
     pygame.init()
-    GAMESIZE = 4  # 4*4
+    GAMESIZE = 4  # n*n
     WINDOWWIDTH = GAMESIZE * TILESIZE + 250
     WINDOWHEIGHT = GAMESIZE * TILESIZE + 200
     DISPLAYSURF = pygame.display.set_mode((WINDOWWIDTH, WINDOWHEIGHT))
-    pygame.display.set_caption('Slide Puzzle')
+    pygame.display.set_caption('Kenken Puzzle')
     BASICFONT = pygame.font.Font('freesansbold.ttf', BASICFONTSIZE)
     SECFONT = pygame.font.Font('freesansbold.ttf', SECFONTSIZE)
 
@@ -68,9 +68,10 @@ def main():
     SOLVE_SURF, SOLVE_RECT = makeText('Solve',    TEXT, BGCOLOR, 20, 120)
 
     drawBoard(GAMESIZE)
-
+    
     while True:
         checkForQuit()
+        event_handler()
 
 
 def gameGenerator(n):
@@ -90,10 +91,11 @@ def cagesCreator(game):
         seed = random.choice(positions)
         cage.append(seed.copy())
         positions.remove(seed)
-
-        cageSize = random.randint(2,4)
+        # determine how frequent ecah cage size occurs 
+        cageSize = random.randint(2,3)
         rand_num = random.randint(1,100)
-        if rand_num < 10: cageSize = 1
+        if rand_num < 5: cageSize = 1
+        if rand_num > 95: cageSize = 4
 
         for i in range(cageSize-1):
             x = seed[0]
@@ -113,6 +115,7 @@ def cagesCreator(game):
         
     return cages
 
+
 def constraintCreator(game,cages):
     constraints =[]
     for cage in cages:
@@ -122,14 +125,15 @@ def constraintCreator(game,cages):
         topleft_tile = cage[0]
         for tile in cage:
             values.append(game[tile[0]-1][tile[1]-1])
-            if tile[0] <= topleft_tile[0] and tile[1] <= topleft_tile[1]:
+            tiley = tile[0]; tilex = tile[1]
+            if tiley < topleft_tile[0] or (tiley == topleft_tile[0] and tilex <= topleft_tile[1]):
                 topleft_tile = tile
         constraint['topleft'] = topleft_tile
 
         # pick an arithmetic operation for the cage
         cage_size = len(cage)
         if cage_size == 1:
-            op = None
+            op = ' '
         elif cage_size == 2 and max(values[0],values[1]) % min(values[0],values[1]) == 0: 
             op = random.choice(['+','-','÷','x'])
         elif cage_size == 2:
@@ -156,40 +160,28 @@ def constraintCreator(game,cages):
 
 
 
-    
-
-
 def getLeftTopOfTile(tileX, tileY):
     left = XMARGIN + (tileX * TILESIZE) + (tileX - 1)
     top = YMARGIN + (tileY * TILESIZE) + (tileY - 1)
     return (left, top)
 
-def drawTile(tilex, tiley, game, adjx=0, adjy=0):
+def drawTile(tiley, tilex, game, constraint, adjx=0, adjy=0):
     # draw a tile at board coordinates tilex and tiley, optionally a few
     # pixels over (determined by adjx and adjy)
     left, top = getLeftTopOfTile(tilex, tiley)
     pygame.draw.rect(DISPLAYSURF, TILECOLOR, (left + adjx, top + adjy, TILESIZE, TILESIZE))
     # number in the tile
-    textSurf = BASICFONT.render(str(game[tiley][tilex]), True, TEXTCOLOR)
-    textRect = textSurf.get_rect()
-    textRect.center = left + int(TILESIZE / 2) + adjx, top + int(TILESIZE / 2) + adjy
+    # textSurf = BASICFONT.render(str(game[tiley][tilex]), True, TEXTCOLOR)
+    # textRect = textSurf.get_rect()
+    # textRect.center = left + int(TILESIZE / 2) + adjx, top + int(TILESIZE / 2) + adjy
+    # DISPLAYSURF.blit(textSurf, textRect)
     # constraint in the top left
-    constSurf = SECFONT.render(str(game[tiley][tilex])+'+', True, TEXTCOLOR)
-    constRect = constSurf.get_rect()
-    constRect.center = left + 11 + adjx, top + 11 + adjy
+    if [tiley+1,tilex+1] == constraint['topleft']:
+        constSurf = SECFONT.render(str(constraint['constraint_value']) + str(constraint['op']), True, TEXTCOLOR)
+        constRect = constSurf.get_rect()
+        constRect.center = left + int(constRect.width) -2 + adjx, top + 12 + adjy
+        DISPLAYSURF.blit(constSurf, constRect)
 
-    # pygame.draw.line(DISPLAYSURF, BORDERCOLOR, (left, top),  (left, top + TILESIZE), 3)
-
-    DISPLAYSURF.blit(textSurf, textRect)
-    DISPLAYSURF.blit(constSurf, constRect)
-
-def makeText(text, color, bgcolor, top, left):
-    # create the Surface and Rect objects for some text.
-    textSurf = BASICFONT.render(text, True, color, bgcolor)
-    textRect = textSurf.get_rect()
-    textRect.topleft = (top, left)
-    return (textSurf, textRect)
-    
 
 def drawBoard(n):
     # Generate random game
@@ -208,9 +200,13 @@ def drawBoard(n):
     # if message:
     #     textSurf, textRect = makeText(message, MESSAGECOLOR, BGCOLOR, 5, 5)
     #     DISPLAYSURF.blit(textSurf, textRect)
-    for tilex in range(n):
-        for tiley in range(n):
-            drawTile(tilex, tiley, game)
+    for tiley in range(n):
+        for tilex in range(n):
+            # constraint = {'topleft':[1,1], 'op':'+', 'constraint_value':3}
+            for idx, cage in enumerate(cages):
+                if [tiley+1,tilex+1] in cage:
+                    constraint = constraints[idx]
+                    drawTile(tiley, tilex, game, constraint)
 
     for cage in cages:
         for tile in cage:
@@ -244,10 +240,25 @@ def drawBoard(n):
     pygame.display.update()
 
 
+# Game controlers_______________________________________
 
+def makeText(text, color, bgcolor, top, left):
+    # create the Surface and Rect objects for some text.
+    textSurf = BASICFONT.render(text, True, color, bgcolor)
+    textRect = textSurf.get_rect()
+    textRect.topleft = (top, left)
+    return (textSurf, textRect)
 
-
-
+def event_handler():
+    for event in pygame.event.get():
+        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+            ## if mouse is pressed get position of cursor ##
+            pos = pygame.mouse.get_pos()
+            ## check if cursor is on button ##
+            if NEW_RECT.collidepoint(pos):
+                ## exit ##
+                drawBoard(GAMESIZE)
+                return
 
 def checkForQuit():
     for event in pygame.event.get(QUIT): # get all the QUIT events
