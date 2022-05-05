@@ -1,6 +1,4 @@
 # Import the pygame module
-from asyncio import constants
-from msilib import change_sequence
 import pygame, sys, random
  
 # Import pygame.locals for easier access to key coordinates
@@ -23,20 +21,24 @@ BRIGHTBLUE =    (  0,  50, 255)
 DARKTURQUOISE = (  3,  54,  73)
 BLUE =          (  0,  50, 255)
 GREEN =         ( 92, 149,  92)
+YELLOW =        (255, 239, 130)
+DARKGREEN =     ( 47,  83,  59)
 RED =           (255,   0,   0)
 BROWN =         (232, 201, 126)
 OFFGREEN =      (157, 204, 145)
 
 
-BGCOLOR = DARKTURQUOISE
+BGCOLOR = DARKGREEN
 TILECOLOR = WHITE
+HOVERCOLOR = YELLOW
 TEXTCOLOR = BLACK
 BORDERCOLOR = GREEN
 BASICFONTSIZE = 20
 SECFONTSIZE = 14
-TEXT = GREEN
+TEXT = WHITE
 
 BUTTONCOLOR = WHITE
+BUTTONHOVER = OFFGREEN
 BUTTONTEXTCOLOR = BLACK
 MESSAGECOLOR = WHITE
 
@@ -44,15 +46,11 @@ XMARGIN = int((WINDOWWIDTH - (TILESIZE * BOARDWIDTH + (BOARDWIDTH - 1))) / 2)
 # YMARGIN = int((WINDOWHEIGHT - (TILESIZE * BOARDHEIGHT + (BOARDHEIGHT - 1))) / 2)
 YMARGIN = 80
 
-UP = 'up'
-DOWN = 'down'
-LEFT = 'left'
-RIGHT = 'right'
 
 
 def main():
     global DISPLAYSURF, BASICFONT, SECFONT, RESET_SURF, RESET_RECT, NEW_SURF, NEW_RECT, SOLVE_SURF, SOLVE_RECT, GAMESIZE
-
+    global GAME, CAGES, CONSTRAINTS
     pygame.init()
     GAMESIZE = 4  # n*n
     WINDOWWIDTH = GAMESIZE * TILESIZE + 250
@@ -63,11 +61,12 @@ def main():
     SECFONT = pygame.font.Font('freesansbold.ttf', SECFONTSIZE)
 
     # Store the option buttons and their rectangles in OPTIONS.
-    RESET_SURF, RESET_RECT = makeText('Reset',    TEXT, BGCOLOR, 20, 180)
-    NEW_SURF,   NEW_RECT   = makeText('New Game', TEXT, BGCOLOR, 20, 150)
-    SOLVE_SURF, SOLVE_RECT = makeText('Solve',    TEXT, BGCOLOR, 20, 120)
+    RESET_SURF, RESET_RECT = makeText(' Reset ',    TEXT, BGCOLOR, 20, 200)
+    NEW_SURF,   NEW_RECT   = makeText(' New Game ', TEXT, BGCOLOR, 20, 120)
+    SOLVE_SURF, SOLVE_RECT = makeText(' Solve ',    TEXT, BGCOLOR, 20, 160)
 
-    drawBoard(GAMESIZE)
+    generateNewGame(GAMESIZE)
+    drawBoard(GAMESIZE, None, CAGES, CONSTRAINTS)
     
     while True:
         checkForQuit()
@@ -159,22 +158,47 @@ def constraintCreator(game,cages):
     return constraints
 
 
+def generateNewGame(n):
+    global GAME, CAGES, CONSTRAINTS
+    # Generate random game
+    GAME = gameGenerator(n)
+    # print(game)
+    for i in GAME:
+        print(i)
+    # Create cages for the game
+    CAGES = cagesCreator(n)
+    print(CAGES)
+    # Determine the constraints
+    CONSTRAINTS = constraintCreator(GAME, CAGES)
+    print(CONSTRAINTS)
+
+def solveGame():
+    return GAME   # TO BE CHANGED TO A CSP SOLVER
+
 
 def getLeftTopOfTile(tileX, tileY):
     left = XMARGIN + (tileX * TILESIZE) + (tileX - 1)
     top = YMARGIN + (tileY * TILESIZE) + (tileY - 1)
     return (left, top)
 
-def drawTile(tiley, tilex, game, constraint, adjx=0, adjy=0):
+global HOVERTILE, TILES, TILESPOS
+HOVERTILE =[]
+TILES =[]
+TILESPOS =[]
+def drawTile(tiley, tilex, game, constraint, color, adjx=0, adjy=0):
     # draw a tile at board coordinates tilex and tiley, optionally a few
     # pixels over (determined by adjx and adjy)
     left, top = getLeftTopOfTile(tilex, tiley)
-    pygame.draw.rect(DISPLAYSURF, TILECOLOR, (left + adjx, top + adjy, TILESIZE, TILESIZE))
+    tile = pygame.draw.rect(DISPLAYSURF, color, (left + adjx, top + adjy, TILESIZE, TILESIZE))
+    global HOVERTILE, TILES, TILESPOS
+    TILESPOS.append([tiley,tilex])
+    TILES.append(tile)
     # number in the tile
-    # textSurf = BASICFONT.render(str(game[tiley][tilex]), True, TEXTCOLOR)
-    # textRect = textSurf.get_rect()
-    # textRect.center = left + int(TILESIZE / 2) + adjx, top + int(TILESIZE / 2) + adjy
-    # DISPLAYSURF.blit(textSurf, textRect)
+    if game != None:
+        textSurf = BASICFONT.render(str(game[tiley][tilex]), True, TEXTCOLOR)
+        textRect = textSurf.get_rect()
+        textRect.center = left + int(TILESIZE / 2) + adjx, top + int(TILESIZE / 2) + adjy
+        DISPLAYSURF.blit(textSurf, textRect)
     # constraint in the top left
     if [tiley+1,tilex+1] == constraint['topleft']:
         constSurf = SECFONT.render(str(constraint['constraint_value']) + str(constraint['op']), True, TEXTCOLOR)
@@ -182,20 +206,10 @@ def drawTile(tiley, tilex, game, constraint, adjx=0, adjy=0):
         constRect.center = left + int(constRect.width) -2 + adjx, top + 12 + adjy
         DISPLAYSURF.blit(constSurf, constRect)
 
-
-def drawBoard(n):
-    # Generate random game
-    game = gameGenerator(n)
-    # print(game)
-    for i in game:
-        print(i)
-    # Create cages for the game
-    cages = cagesCreator(n)
-    print(cages)
-    # Determine the constraints
-    constraints = constraintCreator(game, cages)
-    print(constraints)
-    
+global GAMEDISPLAYED
+GAMEDISPLAYED = None
+def drawBoard(n, game, cages, constraints):
+    global HOVERTILE, TILES, TILESPOS
     DISPLAYSURF.fill(OFFGREEN)
     # if message:
     #     textSurf, textRect = makeText(message, MESSAGECOLOR, BGCOLOR, 5, 5)
@@ -206,7 +220,9 @@ def drawBoard(n):
             for idx, cage in enumerate(cages):
                 if [tiley+1,tilex+1] in cage:
                     constraint = constraints[idx]
-                    drawTile(tiley, tilex, game, constraint)
+                    color = TILECOLOR
+                    if [tiley,tilex]==HOVERTILE: color = HOVERCOLOR
+                    drawTile(tiley, tilex, game, constraint, color)
 
     for cage in cages:
         for tile in cage:
@@ -250,15 +266,52 @@ def makeText(text, color, bgcolor, top, left):
     return (textSurf, textRect)
 
 def event_handler():
+    global GAMEDISPLAYED
     for event in pygame.event.get():
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             ## if mouse is pressed get position of cursor ##
             pos = pygame.mouse.get_pos()
             ## check if cursor is on button ##
             if NEW_RECT.collidepoint(pos):
-                ## exit ##
-                drawBoard(GAMESIZE)
+                # New game
+                generateNewGame(GAMESIZE)
+                GAMEDISPLAYED = None
+                drawBoard(GAMESIZE, GAMEDISPLAYED, CAGES, CONSTRAINTS)
+                pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND)
                 return
+            elif SOLVE_RECT.collidepoint(pos):
+                # Solve game
+                solved = solveGame()
+                GAMEDISPLAYED = solved
+                drawBoard(GAMESIZE, GAMEDISPLAYED, CAGES, CONSTRAINTS)
+                pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND)
+                return
+            elif RESET_RECT.collidepoint(pos):
+                # Reset game
+                GAMEDISPLAYED = None
+                drawBoard(GAMESIZE, GAMEDISPLAYED, CAGES, CONSTRAINTS)
+                pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND)
+                return
+
+        elif event.type == pygame.MOUSEMOTION:
+            global HOVERTILE, TILES, TILESPOS
+            pos = pygame.mouse.get_pos()
+            ## check if cursor is on tile ##
+            HOVERTILE = None
+            if len(TILES) !=0:
+                for i in range(len(TILES)):
+                    if TILES[i].collidepoint(pos):
+                        HOVERTILE = TILESPOS[i]
+                drawBoard(GAMESIZE, GAMEDISPLAYED, CAGES, CONSTRAINTS)
+                    # else: drawBoard(GAMESIZE, GAMEDISPLAYED, CAGES, CONSTRAINTS)
+
+            ## check if cursor is on button ##
+            if NEW_RECT.collidepoint(pos) or \
+                    SOLVE_RECT.collidepoint(pos) or \
+                    RESET_RECT.collidepoint(pos) :
+                pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND)
+                return
+            else :pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_ARROW)
 
 def checkForQuit():
     for event in pygame.event.get(QUIT): # get all the QUIT events
