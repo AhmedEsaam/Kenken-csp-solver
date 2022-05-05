@@ -1,4 +1,5 @@
 # Import the pygame module
+from asyncio import constants
 from msilib import change_sequence
 import pygame, sys, random
  
@@ -53,7 +54,7 @@ def main():
     global DISPLAYSURF, BASICFONT, SECFONT, RESET_SURF, RESET_RECT, NEW_SURF, NEW_RECT, SOLVE_SURF, SOLVE_RECT, GAMESIZE
 
     pygame.init()
-    GAMESIZE = 4   # 3*3
+    GAMESIZE = 4  # 4*4
     WINDOWWIDTH = GAMESIZE * TILESIZE + 250
     WINDOWHEIGHT = GAMESIZE * TILESIZE + 200
     DISPLAYSURF = pygame.display.set_mode((WINDOWWIDTH, WINDOWHEIGHT))
@@ -110,7 +111,51 @@ def cagesCreator(game):
             positions.remove(seed)
         cages.append(cage)
         
-    return cages 
+    return cages
+
+def constraintCreator(game,cages):
+    constraints =[]
+    for cage in cages:
+        constraint ={}
+        # determine topleft tile and values in the cage
+        values=[]
+        topleft_tile = cage[0]
+        for tile in cage:
+            values.append(game[tile[0]-1][tile[1]-1])
+            if tile[0] <= topleft_tile[0] and tile[1] <= topleft_tile[1]:
+                topleft_tile = tile
+        constraint['topleft'] = topleft_tile
+
+        # pick an arithmetic operation for the cage
+        cage_size = len(cage)
+        if cage_size == 1:
+            op = None
+        elif cage_size == 2 and max(values[0],values[1]) % min(values[0],values[1]) == 0: 
+            op = random.choice(['+','-','÷','x'])
+        elif cage_size == 2:
+            op = random.choice(['+','-','x'])
+        else :
+            op = random.choice(['+','x'])
+        constraint['op'] = op
+
+        # determine constraint value based on the operation
+        cnst = values[0]
+        if op=='+':
+            cnst = 0
+            for v in values: cnst += v 
+        elif op=='x':
+            cnst = 1
+            for v in values: cnst *= v 
+        elif op=='-':
+            cnst = abs(values[0]-values[1])
+        elif op=='÷':
+            cnst = int(max(values[0],values[1]) / min(values[0],values[1]))
+        constraint['constraint_value'] = cnst
+        constraints.append(constraint)
+    return constraints
+
+
+
     
 
 
@@ -129,7 +174,7 @@ def drawTile(tilex, tiley, game, adjx=0, adjy=0):
     textRect = textSurf.get_rect()
     textRect.center = left + int(TILESIZE / 2) + adjx, top + int(TILESIZE / 2) + adjy
     # constraint in the top left
-    constSurf = SECFONT.render(str(game[tiley][tilex]), True, TEXTCOLOR)
+    constSurf = SECFONT.render(str(game[tiley][tilex])+'+', True, TEXTCOLOR)
     constRect = constSurf.get_rect()
     constRect.center = left + 11 + adjx, top + 11 + adjy
 
@@ -144,6 +189,7 @@ def makeText(text, color, bgcolor, top, left):
     textRect = textSurf.get_rect()
     textRect.topleft = (top, left)
     return (textSurf, textRect)
+    
 
 def drawBoard(n):
     # Generate random game
@@ -151,9 +197,12 @@ def drawBoard(n):
     # print(game)
     for i in game:
         print(i)
-
+    # Create cages for the game
     cages = cagesCreator(n)
     print(cages)
+    # Determine the constraints
+    constraints = constraintCreator(game, cages)
+    print(constraints)
     
     DISPLAYSURF.fill(OFFGREEN)
     # if message:
@@ -198,6 +247,8 @@ def drawBoard(n):
 
 
 
+
+
 def checkForQuit():
     for event in pygame.event.get(QUIT): # get all the QUIT events
         pygame.quit()
@@ -213,3 +264,4 @@ def checkForQuit():
 
 if __name__ == '__main__':
     main()
+
