@@ -175,8 +175,9 @@ def generateNewGame(n):
     CONSTRAINTS = constraintCreator(GAME, CAGES)
     print(CONSTRAINTS)
 
-def solveGame():
+def solveGame(GAMESIZE, GAMEDISPLAYED, CAGES, CONSTRAINTS): # TO BE CHANGED TO A CSP SOLVER
     return GAME   # TO BE CHANGED TO A CSP SOLVER
+
 
 
 # Game Draw___________________________________________________________________
@@ -290,7 +291,7 @@ def eventHandler():
                 pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND)
             elif SOLVE_RECT.collidepoint(pos):
                 # Solve game
-                solved = solveGame()
+                solved = solveGame(GAMESIZE, GAMEDISPLAYED, CAGES, CONSTRAINTS)
                 GAMEDISPLAYED = solved
                 pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND)
             elif RESET_RECT.collidepoint(pos):
