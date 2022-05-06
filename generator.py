@@ -1,5 +1,4 @@
 # Import the pygame module
-from tkinter import RIGHT
 import pygame, sys, random
  
 # Import pygame.locals for easier access to key coordinates
@@ -72,11 +71,7 @@ def main():
     drawBoard(GAMESIZE, None, CAGES, CONSTRAINTS)
     
     while True:
-        
-        keyHandler()
-        mouseHandler()
-        # drawBoard(GAMESIZE, GAMEDISPLAYED, CAGES, CONSTRAINTS)
-
+        eventHandler()
 
 
 def gameGenerator(n):
@@ -99,8 +94,11 @@ def cagesCreator(game):
         # determine how frequent ecah cage size occurs 
         cageSize = random.randint(2,3)
         rand_num = random.randint(1,100)
-        if rand_num < 5: cageSize = 1
-        if rand_num > 95: cageSize = 4
+        if rand_num < 101: cageSize = 4
+        if rand_num < 35: cageSize = 3
+        if rand_num < 96: cageSize = 3
+        if rand_num < 7: cageSize = 1
+        
 
         for i in range(cageSize-1):
             x = seed[0]
@@ -182,16 +180,18 @@ def solveGame():
     return GAME   # TO BE CHANGED TO A CSP SOLVER
 
 
-def getLeftTopOfTile(tileX, tileY):
-    left = XMARGIN + (tileX * TILESIZE) + (tileX - 1)
-    top = YMARGIN + (tileY * TILESIZE) + (tileY - 1)
-    return (left, top)
+# Game Draw___________________________________________________________________
 
 global HOVERTILE, PRESSEDTILE, TILES, TILESPOS
 HOVERTILE =[]
 PRESSEDTILE =[]
 TILES =[]
 TILESPOS =[]
+
+def getLeftTopOfTile(tileX, tileY):
+    left = XMARGIN + (tileX * TILESIZE) + (tileX - 1)
+    top = YMARGIN + (tileY * TILESIZE) + (tileY - 1)
+    return (left, top)
 
 def drawTile(tiley, tilex, game, constraint, color, adjx=0, adjy=0):
     # draw a tile at board coordinates tilex and tiley, optionally a few
@@ -255,7 +255,8 @@ def drawBoard(n, game, cages, constraints):
     pygame.display.update()
 
 
-# Game controlers_______________________________________
+
+# Game controlers__________________________________________________________
 
 def makeText(text, color, bgcolor, top, left):
     # create the Surface and Rect objects for some text.
@@ -264,11 +265,13 @@ def makeText(text, color, bgcolor, top, left):
     textRect.topleft = (top, left)
     return (textSurf, textRect)
 
+
 global val
-val = 0
-def mouseHandler():
+val = -1
+def eventHandler():
     global HOVERTILE, PRESSEDTILE, TILES, TILESPOS, GAMEDISPLAYED
-    global val
+    global GAMEDISPLAYED, val, PRESSEDTILE
+    val = -1
     for event in pygame.event.get():
         ## get position of cursor
         pos = pygame.mouse.get_pos()
@@ -280,29 +283,24 @@ def mouseHandler():
                 for i in range(len(TILES)):
                     if TILES[i].collidepoint(pos):
                         PRESSEDTILE = TILESPOS[i]
-                        # drawBoard(GAMESIZE, GAMEDISPLAYED, CAGES, CONSTRAINTS)
             ## check if cursor is on button ##
             if NEW_RECT.collidepoint(pos):
                 # New game
                 generateNewGame(GAMESIZE)
                 GAMEDISPLAYED = None
-                # drawBoard(GAMESIZE, GAMEDISPLAYED, CAGES, CONSTRAINTS)
                 pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND)
             elif SOLVE_RECT.collidepoint(pos):
                 # Solve game
                 solved = solveGame()
                 GAMEDISPLAYED = solved
-                # drawBoard(GAMESIZE, GAMEDISPLAYED, CAGES, CONSTRAINTS)
                 pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND)
             elif RESET_RECT.collidepoint(pos):
                 # Reset game
                 GAMEDISPLAYED = None
-                # drawBoard(GAMESIZE, GAMEDISPLAYED, CAGES, CONSTRAINTS)
                 pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND)
 
             drawBoard(GAMESIZE, GAMEDISPLAYED, CAGES, CONSTRAINTS)
             
-
         # Handle mouse hover events
         elif event.type == pygame.MOUSEMOTION:
             ## check if cursor is on tile ##
@@ -320,75 +318,73 @@ def mouseHandler():
                 return
             else :pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_ARROW)
 
-        # pygame.event.post(event) # put the other KEYUP event objects back
+        # Key handler
+        elif event.type == pygame.KEYUP:
+            if event.key == K_ESCAPE:
+                pygame.quit()
+                sys.exit() # terminate if the KEYUP event was for the Esc key
+            # Insert values
+            elif event.key == K_KP0: val = 0
+            elif event.key == K_KP1: val = 1
+            elif event.key == K_KP2: val = 2
+            elif event.key == K_KP3: val = 3
+            elif event.key == K_KP4: val = 4
+            elif event.key == K_KP5: val = 5
+            elif event.key == K_KP6: val = 6
+            elif event.key == K_KP7: val = 7
+            elif event.key == K_KP8: val = 8
+            elif event.key == K_KP9: val = 9
 
+            if event.key ==K_RIGHT:
+                if len(PRESSEDTILE) !=0 and PRESSEDTILE[1]+1 <= GAMESIZE-1:
+                    PRESSEDTILE = [PRESSEDTILE[0], PRESSEDTILE[1]+1]
+                    drawBoard(GAMESIZE, GAMEDISPLAYED, CAGES, CONSTRAINTS)
+            elif event.key ==K_LEFT:
+                if len(PRESSEDTILE) !=0 and PRESSEDTILE[1]-1 >= 0:
+                    PRESSEDTILE = [PRESSEDTILE[0], PRESSEDTILE[1]-1]
+                    drawBoard(GAMESIZE, GAMEDISPLAYED, CAGES, CONSTRAINTS)
+            elif event.key ==K_UP:
+                if len(PRESSEDTILE) !=0 and PRESSEDTILE[0]-1 >= 0:
+                    PRESSEDTILE = [PRESSEDTILE[0]-1, PRESSEDTILE[1]]
+                    drawBoard(GAMESIZE, GAMEDISPLAYED, CAGES, CONSTRAINTS)
+            elif event.key ==K_DOWN:
+                if len(PRESSEDTILE) !=0 and PRESSEDTILE[0]+1 <= GAMESIZE-1:
+                    PRESSEDTILE = [PRESSEDTILE[0]+1, PRESSEDTILE[1]]
+                    drawBoard(GAMESIZE, GAMEDISPLAYED, CAGES, CONSTRAINTS)
+            # pygame.event.post(event) # put the other KEYUP event objects back
 
-
-def keyHandler():
-    global GAMEDISPLAYED, val, PRESSEDTILE
-    val = -1
-    for event in pygame.event.get(KEYUP): # get all the KEYUP events
-        if event.key == K_ESCAPE:
+        # Check for quit
+        elif event.type == pygame.QUIT:
             pygame.quit()
-            sys.exit() # terminate if the KEYUP event was for the Esc key
-        # Insert values
-        elif event.key == K_KP0: val = 0
-        elif event.key == K_KP1: val = 1
-        elif event.key == K_KP2: val = 2
-        elif event.key == K_KP3: val = 3
-        elif event.key == K_KP4: val = 4
-        elif event.key == K_KP5: val = 5
-        elif event.key == K_KP6: val = 6
-        elif event.key == K_KP7: val = 7
-        elif event.key == K_KP8: val = 8
-        elif event.key == K_KP9: val = 9
-        # else: val = -1
+            sys.exit() # terminate if any QUIT events are present
 
-        if event.key ==K_RIGHT:
-            if len(PRESSEDTILE) !=0 and PRESSEDTILE[1]+1 <= GAMESIZE-1:
-                PRESSEDTILE = [PRESSEDTILE[0], PRESSEDTILE[1]+1]
-                drawBoard(GAMESIZE, GAMEDISPLAYED, CAGES, CONSTRAINTS)
-        elif event.key ==K_LEFT:
-            if len(PRESSEDTILE) !=0 and PRESSEDTILE[1]-1 >= 0:
-                PRESSEDTILE = [PRESSEDTILE[0], PRESSEDTILE[1]-1]
-                drawBoard(GAMESIZE, GAMEDISPLAYED, CAGES, CONSTRAINTS)
-        elif event.key ==K_UP:
-            if len(PRESSEDTILE) !=0 and PRESSEDTILE[0]-1 >= 0:
-                PRESSEDTILE = [PRESSEDTILE[0]-1, PRESSEDTILE[1]]
-                drawBoard(GAMESIZE, GAMEDISPLAYED, CAGES, CONSTRAINTS)
-        elif event.key ==K_DOWN:
-            if len(PRESSEDTILE) !=0 and PRESSEDTILE[0]+1 <= GAMESIZE-1:
-                PRESSEDTILE = [PRESSEDTILE[0]+1, PRESSEDTILE[1]]
-                drawBoard(GAMESIZE, GAMEDISPLAYED, CAGES, CONSTRAINTS)
-        # drawBoard(GAMESIZE, GAMEDISPLAYED, CAGES, CONSTRAINTS)
+        # Inseting values
+        if val != -1 :
+            if GAMEDISPLAYED == None:
+                GAMEDISPLAYED = []
+                for h in range(GAMESIZE):
+                    row = []
+                    for v in range(GAMESIZE):
+                        row.append('')
+                    GAMEDISPLAYED.append(row)
+            h = PRESSEDTILE[0]
+            v = PRESSEDTILE[1]
+            if val == 0: GAMEDISPLAYED[h][v] = ''
+            else: GAMEDISPLAYED[h][v] = val
+            drawBoard(GAMESIZE, GAMEDISPLAYED, CAGES, CONSTRAINTS)
+            # print(GAMEDISPLAYED)
 
-        # pygame.event.post(event) # put the other KEYUP event objects back
-
-
-    if val != -1 :
-        if GAMEDISPLAYED == None:
-            GAMEDISPLAYED = []
-            for h in range(GAMESIZE):
-                row = []
-                for v in range(GAMESIZE):
-                    row.append('')
-                GAMEDISPLAYED.append(row)
-        h = PRESSEDTILE[0]
-        v = PRESSEDTILE[1]
-        if val == 0: GAMEDISPLAYED[h][v] = ''
-        else: GAMEDISPLAYED[h][v] = val
-        drawBoard(GAMESIZE, GAMEDISPLAYED, CAGES, CONSTRAINTS)
-        print(GAMEDISPLAYED)
-
-    val = -1
         
+
+    # # Check for quit
     # for event in pygame.event.get(QUIT): # get all the QUIT events
     #     pygame.quit()
     #     sys.exit() # terminate if any QUIT events are present
-
-
-        
-
+    # for event in pygame.event.get(KEYUP): # get all the KEYUP events
+    #     if event.key == K_ESCAPE:
+    #         pygame.quit()
+    #         sys.exit() # terminate if the KEYUP event was for the Esc key
+    #     pygame.event.post(event) # put the other KEYUP event objects back
 
 
 if __name__ == '__main__':
