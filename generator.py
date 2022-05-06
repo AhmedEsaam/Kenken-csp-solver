@@ -2,7 +2,6 @@
 import pygame, sys, random
  
 # Import pygame.locals for easier access to key coordinates
-# Updated to conform to flake8 and black standards
 from pygame.locals import *
 
 # Create the constants (go ahead and experiment with different values)
