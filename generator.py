@@ -1,4 +1,5 @@
 # Import the pygame module
+from tkinter import RIGHT
 import pygame, sys, random
  
 # Import pygame.locals for easier access to key coordinates
@@ -26,11 +27,13 @@ DARKGREEN =     ( 47,  83,  59)
 RED =           (255,   0,   0)
 BROWN =         (232, 201, 126)
 OFFGREEN =      (157, 204, 145)
+OFFGREEN2 =     (177, 230, 147)
 
 
 BGCOLOR = DARKGREEN
 TILECOLOR = WHITE
 HOVERCOLOR = YELLOW
+PRESSCOLOR = OFFGREEN2
 TEXTCOLOR = BLACK
 BORDERCOLOR = GREEN
 BASICFONTSIZE = 20
@@ -69,8 +72,11 @@ def main():
     drawBoard(GAMESIZE, None, CAGES, CONSTRAINTS)
     
     while True:
-        checkForQuit()
-        event_handler()
+        
+        keyHandler()
+        mouseHandler()
+        # drawBoard(GAMESIZE, GAMEDISPLAYED, CAGES, CONSTRAINTS)
+
 
 
 def gameGenerator(n):
@@ -181,16 +187,18 @@ def getLeftTopOfTile(tileX, tileY):
     top = YMARGIN + (tileY * TILESIZE) + (tileY - 1)
     return (left, top)
 
-global HOVERTILE, TILES, TILESPOS
+global HOVERTILE, PRESSEDTILE, TILES, TILESPOS
 HOVERTILE =[]
+PRESSEDTILE =[]
 TILES =[]
 TILESPOS =[]
+
 def drawTile(tiley, tilex, game, constraint, color, adjx=0, adjy=0):
     # draw a tile at board coordinates tilex and tiley, optionally a few
     # pixels over (determined by adjx and adjy)
     left, top = getLeftTopOfTile(tilex, tiley)
     tile = pygame.draw.rect(DISPLAYSURF, color, (left + adjx, top + adjy, TILESIZE, TILESIZE))
-    global HOVERTILE, TILES, TILESPOS
+    global TILES, TILESPOS
     TILESPOS.append([tiley,tilex])
     TILES.append(tile)
     # number in the tile
@@ -208,8 +216,9 @@ def drawTile(tiley, tilex, game, constraint, color, adjx=0, adjy=0):
 
 global GAMEDISPLAYED
 GAMEDISPLAYED = None
+
 def drawBoard(n, game, cages, constraints):
-    global HOVERTILE, TILES, TILESPOS
+    global HOVERTILE, PRESSEDTILE, TILES, TILESPOS
     DISPLAYSURF.fill(OFFGREEN)
     # if message:
     #     textSurf, textRect = makeText(message, MESSAGECOLOR, BGCOLOR, 5, 5)
@@ -221,9 +230,9 @@ def drawBoard(n, game, cages, constraints):
                 if [tiley+1,tilex+1] in cage:
                     constraint = constraints[idx]
                     color = TILECOLOR
-                    if [tiley,tilex]==HOVERTILE: color = HOVERCOLOR
+                    if [tiley,tilex]==PRESSEDTILE: color = PRESSCOLOR
+                    elif [tiley,tilex]==HOVERTILE: color = HOVERCOLOR
                     drawTile(tiley, tilex, game, constraint, color)
-
     for cage in cages:
         for tile in cage:
             tilex = tile[0]
@@ -240,16 +249,6 @@ def drawBoard(n, game, cages, constraints):
             if [tilex,tiley+1] not in cage :
                 pygame.draw.line(DISPLAYSURF, BORDERCOLOR, (left + TILESIZE, top + TILESIZE),  (left + TILESIZE , top), 3) #right
                 
-                
-    # pygame.draw.line(DISPLAYSURF, BORDERCOLOR, (left, top),  (left, top + TILESIZE), 3) #left
-    # pygame.draw.line(DISPLAYSURF, BORDERCOLOR, (left, top),  (left + TILESIZE, top), 3) #top
-    # pygame.draw.line(DISPLAYSURF, BORDERCOLOR, (left + TILESIZE, top + TILESIZE),  (left , top + TILESIZE), 3) #bottom
-    # pygame.draw.line(DISPLAYSURF, BORDERCOLOR, (left + TILESIZE, top + TILESIZE),  (left + TILESIZE , top), 3) #right
-
-    # left, top = getLeftTopOfTile(0, 0)
-    # width = BOARDWIDTH * TILESIZE
-    # height = BOARDHEIGHT * TILESIZE
-
     DISPLAYSURF.blit(RESET_SURF, RESET_RECT)
     DISPLAYSURF.blit(NEW_SURF, NEW_RECT)
     DISPLAYSURF.blit(SOLVE_SURF, SOLVE_RECT)
@@ -265,46 +264,54 @@ def makeText(text, color, bgcolor, top, left):
     textRect.topleft = (top, left)
     return (textSurf, textRect)
 
-def event_handler():
-    global GAMEDISPLAYED
+global val
+val = 0
+def mouseHandler():
+    global HOVERTILE, PRESSEDTILE, TILES, TILESPOS, GAMEDISPLAYED
+    global val
     for event in pygame.event.get():
+        ## get position of cursor
+        pos = pygame.mouse.get_pos()
+        # Handle mouse press events
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-            ## if mouse is pressed get position of cursor ##
-            pos = pygame.mouse.get_pos()
+            ## check if cursor is on tile ##
+            PRESSEDTILE = []
+            if len(TILES) !=0:
+                for i in range(len(TILES)):
+                    if TILES[i].collidepoint(pos):
+                        PRESSEDTILE = TILESPOS[i]
+                        # drawBoard(GAMESIZE, GAMEDISPLAYED, CAGES, CONSTRAINTS)
             ## check if cursor is on button ##
             if NEW_RECT.collidepoint(pos):
                 # New game
                 generateNewGame(GAMESIZE)
                 GAMEDISPLAYED = None
-                drawBoard(GAMESIZE, GAMEDISPLAYED, CAGES, CONSTRAINTS)
+                # drawBoard(GAMESIZE, GAMEDISPLAYED, CAGES, CONSTRAINTS)
                 pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND)
-                return
             elif SOLVE_RECT.collidepoint(pos):
                 # Solve game
                 solved = solveGame()
                 GAMEDISPLAYED = solved
-                drawBoard(GAMESIZE, GAMEDISPLAYED, CAGES, CONSTRAINTS)
+                # drawBoard(GAMESIZE, GAMEDISPLAYED, CAGES, CONSTRAINTS)
                 pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND)
-                return
             elif RESET_RECT.collidepoint(pos):
                 # Reset game
                 GAMEDISPLAYED = None
-                drawBoard(GAMESIZE, GAMEDISPLAYED, CAGES, CONSTRAINTS)
+                # drawBoard(GAMESIZE, GAMEDISPLAYED, CAGES, CONSTRAINTS)
                 pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND)
-                return
 
+            drawBoard(GAMESIZE, GAMEDISPLAYED, CAGES, CONSTRAINTS)
+            
+
+        # Handle mouse hover events
         elif event.type == pygame.MOUSEMOTION:
-            global HOVERTILE, TILES, TILESPOS
-            pos = pygame.mouse.get_pos()
             ## check if cursor is on tile ##
             HOVERTILE = None
             if len(TILES) !=0:
                 for i in range(len(TILES)):
                     if TILES[i].collidepoint(pos):
                         HOVERTILE = TILESPOS[i]
-                drawBoard(GAMESIZE, GAMEDISPLAYED, CAGES, CONSTRAINTS)
-                    # else: drawBoard(GAMESIZE, GAMEDISPLAYED, CAGES, CONSTRAINTS)
-
+            if HOVERTILE != None: drawBoard(GAMESIZE, GAMEDISPLAYED, CAGES, CONSTRAINTS)
             ## check if cursor is on button ##
             if NEW_RECT.collidepoint(pos) or \
                     SOLVE_RECT.collidepoint(pos) or \
@@ -313,16 +320,74 @@ def event_handler():
                 return
             else :pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_ARROW)
 
-def checkForQuit():
-    for event in pygame.event.get(QUIT): # get all the QUIT events
-        pygame.quit()
-        sys.exit() # terminate if any QUIT events are present
+        # pygame.event.post(event) # put the other KEYUP event objects back
+
+
+
+def keyHandler():
+    global GAMEDISPLAYED, val, PRESSEDTILE
+    val = -1
     for event in pygame.event.get(KEYUP): # get all the KEYUP events
         if event.key == K_ESCAPE:
             pygame.quit()
             sys.exit() # terminate if the KEYUP event was for the Esc key
-        pygame.event.post(event) # put the other KEYUP event objects back
+        # Insert values
+        elif event.key == K_KP0: val = 0
+        elif event.key == K_KP1: val = 1
+        elif event.key == K_KP2: val = 2
+        elif event.key == K_KP3: val = 3
+        elif event.key == K_KP4: val = 4
+        elif event.key == K_KP5: val = 5
+        elif event.key == K_KP6: val = 6
+        elif event.key == K_KP7: val = 7
+        elif event.key == K_KP8: val = 8
+        elif event.key == K_KP9: val = 9
+        # else: val = -1
 
+        if event.key ==K_RIGHT:
+            if len(PRESSEDTILE) !=0 and PRESSEDTILE[1]+1 <= GAMESIZE-1:
+                PRESSEDTILE = [PRESSEDTILE[0], PRESSEDTILE[1]+1]
+                drawBoard(GAMESIZE, GAMEDISPLAYED, CAGES, CONSTRAINTS)
+        elif event.key ==K_LEFT:
+            if len(PRESSEDTILE) !=0 and PRESSEDTILE[1]-1 >= 0:
+                PRESSEDTILE = [PRESSEDTILE[0], PRESSEDTILE[1]-1]
+                drawBoard(GAMESIZE, GAMEDISPLAYED, CAGES, CONSTRAINTS)
+        elif event.key ==K_UP:
+            if len(PRESSEDTILE) !=0 and PRESSEDTILE[0]-1 >= 0:
+                PRESSEDTILE = [PRESSEDTILE[0]-1, PRESSEDTILE[1]]
+                drawBoard(GAMESIZE, GAMEDISPLAYED, CAGES, CONSTRAINTS)
+        elif event.key ==K_DOWN:
+            if len(PRESSEDTILE) !=0 and PRESSEDTILE[0]+1 <= GAMESIZE-1:
+                PRESSEDTILE = [PRESSEDTILE[0]+1, PRESSEDTILE[1]]
+                drawBoard(GAMESIZE, GAMEDISPLAYED, CAGES, CONSTRAINTS)
+        # drawBoard(GAMESIZE, GAMEDISPLAYED, CAGES, CONSTRAINTS)
+
+        # pygame.event.post(event) # put the other KEYUP event objects back
+
+
+    if val != -1 :
+        if GAMEDISPLAYED == None:
+            GAMEDISPLAYED = []
+            for h in range(GAMESIZE):
+                row = []
+                for v in range(GAMESIZE):
+                    row.append('')
+                GAMEDISPLAYED.append(row)
+        h = PRESSEDTILE[0]
+        v = PRESSEDTILE[1]
+        if val == 0: GAMEDISPLAYED[h][v] = ''
+        else: GAMEDISPLAYED[h][v] = val
+        drawBoard(GAMESIZE, GAMEDISPLAYED, CAGES, CONSTRAINTS)
+        print(GAMEDISPLAYED)
+
+    val = -1
+        
+    # for event in pygame.event.get(QUIT): # get all the QUIT events
+    #     pygame.quit()
+    #     sys.exit() # terminate if any QUIT events are present
+
+
+        
 
 
 
