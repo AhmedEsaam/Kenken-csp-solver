@@ -11,7 +11,7 @@ TILESIZE = 70
 WINDOWWIDTH = 640
 WINDOWHEIGHT = 480
 FPS = 30
-BLANK = None
+BLANK = None 
 
 #                 R    G    B
 BLACK =         (  0,   0,   0)
@@ -79,26 +79,25 @@ def gameGenerator(n):
     return list(firstRow[i:]+firstRow[:i] for i in permutes)
 
 
-def cagesCreator(game):
+def cagesCreator():
     cages=[]
     positions=[]
-    for i in range(GAMESIZE):
-        for j in range(GAMESIZE):
-            positions.append([i+1,j+1])
+    for i in range(1,GAMESIZE+1):
+        for j in range(1,GAMESIZE+1):
+            positions.append([i,j])
     while(len(positions) != 0):
         cage=[]
         seed = random.choice(positions)
         cage.append(seed.copy())
         positions.remove(seed)
         # determine how frequent ecah cage size occurs 
-        cageSize = random.randint(2,3)
-        rand_num = random.randint(1,100)
-        if rand_num < 101: cageSize = 4
-        if rand_num < 35: cageSize = 3
-        if rand_num < 96: cageSize = 3
-        if rand_num < 7: cageSize = 1
+        cageSize = random.randint(2,4)
+        # rand_num = random.randint(1,100)
+        # if rand_num < 50: cageSize = 4
+        # if rand_num < 96: cageSize = 3
+        # if rand_num < 55: cageSize = 2
+        # if rand_num < 2: cageSize = 1
         
-
         for i in range(cageSize-1):
             x = seed[0]
             y = seed[1]
@@ -114,8 +113,39 @@ def cagesCreator(game):
             cage.append(seed.copy())
             positions.remove(seed)
         cages.append(cage)
-        
+
     return cages
+
+def hasMultipleSol(cages):  # Check if current cages distribution has multiple solutions
+    # Check common columns and rows in cages 
+    cols=[]  # left column number of every side-by-side horizontally two tiles in the same cage
+    rows=[]  # upper row number of every side-by-side vertically two tiles in the same cage
+    n_sized_vertical_cages = 0  #    n stands for Game size
+    n_sized_horizontal_cages = 0  
+    for cage in cages:
+        same_col = 0
+        same_row = 0
+        for tile in cage:
+            h = tile[0]
+            v = tile[1]
+            if [h, v+1] in cage:
+                cols.append(v)
+                same_row += 1
+            if [h+1, v] in cage:
+                rows.append(h)
+                same_col += 1
+        if same_col == GAMESIZE-1: n_sized_vertical_cages += 1
+        if same_row == GAMESIZE-1: n_sized_horizontal_cages += 1
+
+    for i in range(1,GAMESIZE+1):
+        if (cols.count(i) == GAMESIZE) or (rows.count(i) == GAMESIZE):
+            return 1
+    # Check if there exist more than one vertical cages same size as game size,
+    #  the same goes for horizontal cages
+    if (n_sized_vertical_cages > 1) or (n_sized_horizontal_cages > 1):
+        return 1
+
+    return 0
 
 
 def constraintCreator(game,cages):
@@ -169,7 +199,9 @@ def generateNewGame(n):
     for i in GAME:
         print(i)
     # Create cages for the game
-    CAGES = cagesCreator(n)
+    CAGES = cagesCreator()
+    while hasMultipleSol(CAGES):
+        CAGES = cagesCreator()
     print(CAGES)
     # Determine the constraints
     CONSTRAINTS = constraintCreator(GAME, CAGES)
@@ -324,6 +356,7 @@ def eventHandler():
                 pygame.quit()
                 sys.exit() # terminate if the KEYUP event was for the Esc key
             # Insert values
+            elif event.key == K_BACKSPACE: val = 0
             elif event.key == K_KP0: val = 0
             elif event.key == K_KP1: val = 1
             elif event.key == K_KP2: val = 2
@@ -367,24 +400,14 @@ def eventHandler():
                     for v in range(GAMESIZE):
                         row.append('')
                     GAMEDISPLAYED.append(row)
-            h = PRESSEDTILE[0]
-            v = PRESSEDTILE[1]
-            if val == 0: GAMEDISPLAYED[h][v] = ''
-            else: GAMEDISPLAYED[h][v] = val
-            drawBoard(GAMESIZE, GAMEDISPLAYED, CAGES, CONSTRAINTS)
+            if len(PRESSEDTILE) != 0:
+                h = PRESSEDTILE[0]
+                v = PRESSEDTILE[1]
+                if val == 0: GAMEDISPLAYED[h][v] = ''
+                else: GAMEDISPLAYED[h][v] = val
+                drawBoard(GAMESIZE, GAMEDISPLAYED, CAGES, CONSTRAINTS)
             # print(GAMEDISPLAYED)
 
-        
-
-    # # Check for quit
-    # for event in pygame.event.get(QUIT): # get all the QUIT events
-    #     pygame.quit()
-    #     sys.exit() # terminate if any QUIT events are present
-    # for event in pygame.event.get(KEYUP): # get all the KEYUP events
-    #     if event.key == K_ESCAPE:
-    #         pygame.quit()
-    #         sys.exit() # terminate if the KEYUP event was for the Esc key
-    #     pygame.event.post(event) # put the other KEYUP event objects back
 
 
 if __name__ == '__main__':
