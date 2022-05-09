@@ -16,19 +16,22 @@ BLANK = None
 #                 R    G    B
 BLACK =         (  0,   0,   0)
 WHITE =         (255, 255, 255)
+DARKGREY =      ( 55,  58,  64)
+OFFGREY =        (238, 238, 238)
 BRIGHTBLUE =    (  0,  50, 255)
 DARKTURQUOISE = (  3,  54,  73)
 BLUE =          (  0,  50, 255)
 GREEN =         ( 92, 149,  92)
 YELLOW =        (255, 239, 130)
 DARKGREEN =     ( 47,  83,  59)
+DARKGREEN2 =    ( 68, 106,  70)
 RED =           (255,   0,   0)
 BROWN =         (232, 201, 126)
 OFFGREEN =      (157, 204, 145)
 OFFGREEN2 =     (177, 230, 147)
 
 
-BGCOLOR = DARKGREEN
+BGCOLOR = DARKGREEN2
 TILECOLOR = WHITE
 HOVERCOLOR = YELLOW
 PRESSCOLOR = OFFGREEN2
@@ -36,9 +39,9 @@ TEXTCOLOR = BLACK
 BORDERCOLOR = GREEN
 BASICFONTSIZE = 20
 SECFONTSIZE = 14
-TEXT = WHITE
+TEXT = OFFGREY
 
-BUTTONCOLOR = WHITE
+BUTTONCOLOR = BLACK
 BUTTONHOVER = OFFGREEN
 BUTTONTEXTCOLOR = BLACK
 MESSAGECOLOR = WHITE
@@ -50,7 +53,7 @@ YMARGIN = 80
 
 
 def main():
-    global DISPLAYSURF, BASICFONT, SECFONT, RESET_SURF, RESET_RECT, NEW_SURF, NEW_RECT, SOLVE_SURF, SOLVE_RECT, GAMESIZE
+    global DISPLAYSURF, BASICFONT, SECFONT, SECFONT2, SECFONT3, FONT, RESET_SURF, RESET_RECT, NEW_SURF, NEW_RECT, SOLVE_SURF, SOLVE_RECT, SIZE_SURF, SIZE_RECT, SOL_SURF, SOL_RECT, GAMESIZE
     global GAME, CAGES, CONSTRAINTS
     pygame.init()
     GAMESIZE = 4  # n*n
@@ -60,12 +63,11 @@ def main():
     pygame.display.set_caption('Kenken Puzzle')
     BASICFONT = pygame.font.Font('freesansbold.ttf', BASICFONTSIZE)
     SECFONT = pygame.font.Font('freesansbold.ttf', SECFONTSIZE)
+    SECFONT2 = pygame.font.Font(None, SECFONTSIZE + 7)
+    SECFONT3 = pygame.font.Font('freesansbold.ttf', SECFONTSIZE-2)
+    FONT = BASICFONT
 
-    # Store the option buttons and their rectangles in OPTIONS.
-    RESET_SURF, RESET_RECT = makeText(' Reset ',    TEXT, BGCOLOR, 20, 200)
-    NEW_SURF,   NEW_RECT   = makeText(' New Game ', TEXT, BGCOLOR, 20, 120)
-    SOLVE_SURF, SOLVE_RECT = makeText(' Solve ',    TEXT, BGCOLOR, 20, 160)
-
+    drawGameOptions()
     generateNewGame(GAMESIZE)
     drawBoard(GAMESIZE, None, CAGES, CONSTRAINTS)
     
@@ -251,6 +253,7 @@ GAMEDISPLAYED = None
 
 def drawBoard(n, game, cages, constraints):
     global HOVERTILE, PRESSEDTILE, TILES, TILESPOS
+    global DISPLAYSURF, BASICFONT, SECFONT, SECFONT2, FONT, RESET_SURF, RESET_RECT, NEW_SURF, NEW_RECT, SOLVE_SURF, SOLVE_RECT, SIZE_SURF, SIZE_RECT, SOL_SURF, SOL_RECT, GAMESIZE
     DISPLAYSURF.fill(OFFGREEN)
     # if message:
     #     textSurf, textRect = makeText(message, MESSAGECOLOR, BGCOLOR, 5, 5)
@@ -280,23 +283,86 @@ def drawBoard(n, game, cages, constraints):
                 pygame.draw.line(DISPLAYSURF, BORDERCOLOR, (left + TILESIZE, top + TILESIZE),  (left , top + TILESIZE), 3) #bottom
             if [tilex,tiley+1] not in cage :
                 pygame.draw.line(DISPLAYSURF, BORDERCOLOR, (left + TILESIZE, top + TILESIZE),  (left + TILESIZE , top), 3) #right
-                
+    
+    pygame.draw.rect(DISPLAYSURF, DARKGREY, (0, 97     , 127, 24))
+    pygame.draw.rect(DISPLAYSURF, OFFGREY,  (0, 97+24  , 127, 96))
+
+    pygame.draw.rect(DISPLAYSURF, DARKGREY, (0, 137+80 , 127, 24))
+    pygame.draw.rect(DISPLAYSURF, OFFGREY,  (0, 137+80+24 , 127, 96))
+
+    pygame.draw.rect(DISPLAYSURF, DARKGREY, (0, 177+160, 127, 24))
+
     DISPLAYSURF.blit(RESET_SURF, RESET_RECT)
     DISPLAYSURF.blit(NEW_SURF, NEW_RECT)
     DISPLAYSURF.blit(SOLVE_SURF, SOLVE_RECT)
+    for x in range(4): DISPLAYSURF.blit(SIZE_SURF[x], SIZE_RECT[x])
+    for x in range(3): DISPLAYSURF.blit(SOL_SURF[x], SOL_RECT[x])    
     pygame.display.update()
-
 
 
 # Game controlers__________________________________________________________
 
-def makeText(text, color, bgcolor, top, left):
+def makeText(text, color, font, top, left):
     # create the Surface and Rect objects for some text.
-    textSurf = BASICFONT.render(text, True, color, bgcolor)
+    textSurf = font.render(text, True, color)
     textRect = textSurf.get_rect()
     textRect.topleft = (top, left)
     return (textSurf, textRect)
 
+def drawGameOptions():
+    global DISPLAYSURF, BASICFONT, SECFONT, SECFONT2, FONT, RESET_SURF, RESET_RECT, NEW_SURF, NEW_RECT, SOLVE_SURF, SOLVE_RECT, SIZE_SURF, SIZE_RECT, SOL_SURF, SOL_RECT, GAMESIZE
+    # Store the option buttons and their rectangles in OPTIONS.
+    NEW_SURF,   NEW_RECT   = makeText('  New Game ',       TEXT, FONT, 0, 100)
+    SOLVE_SURF, SOLVE_RECT = makeText('  Solve         ',  TEXT, FONT, 0, 140+80)
+    RESET_SURF, RESET_RECT = makeText('  Reset         ',  TEXT, FONT, 0, 180+160)
+
+    group = buttonGroup(127, SECFONT2)
+    SIZE_SURF = []
+    SIZE_RECT = []
+    for x in range(4):
+        group.buttons.append(button(group, str(x+3)+' x '+str(x+3)))
+        s_surf, s_rect = group.buttons[x].draw()
+        SIZE_SURF.append(s_surf)
+        SIZE_RECT.append(s_rect)
+
+    group = buttonGroup(250, SECFONT3)
+    SOL_SURF = []
+    SOL_RECT = []
+    sol_techniques=[]
+    sol_techniques.append('Backtracking')
+    sol_techniques.append('BT w/ Forward Ch.')
+    sol_techniques.append('BT w/ FC & Arc Cons.') 
+    for x in range(3):
+        group.buttons.append(button(group, sol_techniques[x]))
+        s_surf, s_rect = group.buttons[x].draw()
+        SOL_SURF.append(s_surf)
+        SOL_RECT.append(s_rect)
+
+        
+class buttonGroup():
+    def __init__(self, start_pos, font):
+        self.buttons = []
+        self.start_pos = start_pos
+        self.font = font
+
+class button():
+    # global SIZE_SURF, SIZE_RECT
+    def __init__(self,parent,text):
+        self.parent = parent
+        self.text = text
+        self.selected = False
+
+    def select(self):
+        for x in self.parent.buttons: x.selected = False
+        self.selected = True
+
+    def draw(self):
+        SIZE_SURF, SIZE_RECT = makeText(self.text, DARKGREY, self.parent.font, 5, self.parent.start_pos)
+        self.parent.start_pos += 22
+        return (SIZE_SURF, SIZE_RECT)
+        if self.selected: ...
+        else: ...
+        
 
 global val
 val = -1
@@ -413,5 +479,5 @@ def eventHandler():
 if __name__ == '__main__':
     main()
 
-#
+##
 
