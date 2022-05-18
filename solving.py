@@ -24,9 +24,9 @@ def solveGame(GAMESIZE, CAGES, CONSTRAINTS, technique): # TO BE CHANGED TO A CSP
          {'topleft': [1, 1], 'op': 'x', 'constraint_value': 4},
          {'topleft': [1, 2], 'op': '+', 'constraint_value': 4}]
 
-    (technique) : is a string value of the solving technique used one of ('TB', 'FC', 'AC')
+    (technique) : is a string value of the solving technique used one of ('BT', 'FC', 'AC')
 
-        'TB' : Backtracking
+        'BT' : Backtracking
         'FC' : Backtracking with forward checking
         'AC' : Backtracking with forward checking and arc consistency
     
