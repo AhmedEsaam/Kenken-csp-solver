@@ -32,4 +32,4 @@ def solveGame(GAMESIZE, CAGES, CONSTRAINTS, technique): # TO BE CHANGED TO A CSP
     
     '''
 
-    return solved  # TO BE CHANGED TO A CSP SOLVER
+    return solved  # 2D game solution
