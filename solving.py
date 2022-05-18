@@ -1,4 +1,4 @@
-def solveGame(GAMESIZE, CAGES, CONSTRAINTS, technique): # TO BE CHANGED TO A CSP SOLVER
+def solveGame(GAMESIZE, CAGES, CONSTRAINTS, technique): # 
 
     '''
     (GAMESIZE) : is the side size of the game
