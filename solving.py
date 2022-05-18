@@ -4,8 +4,8 @@ def solveGame(GAMESIZE, CAGES, CONSTRAINTS, technique): # TO BE CHANGED TO A CSP
     (GAMESIZE) : is the side size of the game
         if the game size was (3*3) then GAMESIZE = 3, and solution might be :
 
-        [[2, 3, 1]
-         [1, 2, 3]
+        [[2, 3, 1],
+         [1, 2, 3],
          [3, 1, 2]]
 
     (CAGES) : includes the (row,col) indices of squares in each cage.
