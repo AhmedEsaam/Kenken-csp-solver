@@ -1,4 +1,4 @@
-def solveGame(GAMESIZE, CAGES, CONSTRAINTS, technique): # 
+def solveGame(GAMESIZE, CAGES, CONSTRAINTS, technique): 
 
     '''
     (GAMESIZE) : is the side size of the game
