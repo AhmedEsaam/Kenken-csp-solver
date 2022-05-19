@@ -20,7 +20,7 @@ def CSP_BACKTRACKING(Assignment):
         return Assignment
     
     #assign value from square domains
-    print(square_domains[row][col])
+    # print(square_domains[row][col])
     random.shuffle(square_domains[row][col])
     print(square_domains[row][col])
     for v in square_domains[row][col] :
@@ -29,23 +29,30 @@ def CSP_BACKTRACKING(Assignment):
         valid_Assignment = True
         #valid assignment checking
         for i in range(size) : 
+            # validate over the row and col
             if( (Assignment[row][i]==Assignment[row][col]) and (i != col) ):
                 valid_Assignment = False
                 print("i= ",i ,"valid_Assignment =  " ,valid_Assignment )
             if( (Assignment[i][col]==Assignment[row][col]) and (i != row) ):
                 valid_Assignment = False
                 print("i= ",i ,"valid_Assignment =  " ,valid_Assignment )
+            # validate over the cage constraint
+            
+            
             #...
         if(valid_Assignment ): 
             print("valid")
+            print(Assignment)
             if(col != size-1):
                 col +=1 
-            else:
+            else:  #row != size-1
                 row += 1 
                 col = 0 
         
             result = CSP_BACKTRACKING(Assignment)
             if(result == 'failure') :
+                row = 0
+                col = 0
                 print("enter")
                 Assignment = [[0 for i in range(size)] for j in range(size)]
                 result = CSP_BACKTRACKING(Assignment)
@@ -53,10 +60,11 @@ def CSP_BACKTRACKING(Assignment):
                 return result
 
         #else if(!valid_Assignment)  assign another value from square domains  by next iteration 
-    return 'failure'          
+    return 'failure'
 
 def solveGame(GAMESIZE_, CAGES_, CONSTRAINTS_, technique_): # TO BE CHANGED TO A CSP SOLVER
     global GAMESIZE, CAGES, CONSTRAINTS, technique,square_domains
+    global row , col
     GAMESIZE = GAMESIZE_
     CAGES = CAGES_
     CONSTRAINTS = CONSTRAINTS_
@@ -92,8 +100,6 @@ def solveGame(GAMESIZE_, CAGES_, CONSTRAINTS_, technique_): # TO BE CHANGED TO A
         'AC' : Backtracking with forward checking and arc consistency
     
     '''
-    
-
 
     size = GAMESIZE
     rows, cols = (size, size)
@@ -105,8 +111,11 @@ def solveGame(GAMESIZE_, CAGES_, CONSTRAINTS_, technique_): # TO BE CHANGED TO A
     # Empty Assignment : initialize Assignment by zero 
     
     Assignment = [[0 for i in range(size)] for j in range(rows)]
-    
-    return CSP_BACKTRACKING(Assignment)
+    row = 0
+    col = 0
+    csp_BT = CSP_BACKTRACKING(Assignment)
+    print('Assignment : ' ,csp_BT)   
+    return csp_BT
     #print(Assignment)
 
 # initialize square value
@@ -118,8 +127,8 @@ def solveGame(GAMESIZE_, CAGES_, CONSTRAINTS_, technique_): # TO BE CHANGED TO A
 
 
            
-Assignment =  solveGame(3, 0, 0, 0)                 
-print('Assignment : ' ,Assignment)   
+# Assignment =  solveGame(3, 0, 0, 0)                 
+# print('Assignment : ' ,Assignment)   
 
 
 
