@@ -1,3 +1,4 @@
+from asyncio.windows_events import NULL
 import random
 global GAMESIZE, CAGES, CONSTRAINTS, technique ,square_domains
 global row , col
@@ -22,21 +23,64 @@ def CSP_BACKTRACKING(Assignment):
     #assign value from square domains
     # print(square_domains[row][col])
     random.shuffle(square_domains[row][col])
-    print(square_domains[row][col])
+    #print(square_domains[row][col])
     for v in square_domains[row][col] :
         Assignment[row][col] = v
+        print("------------------------------------")
         print(v)
+        print("------------------------------------")
         valid_Assignment = True
         #valid assignment checking
         for i in range(size) : 
             # validate over the row and col
             if( (Assignment[row][i]==Assignment[row][col]) and (i != col) ):
                 valid_Assignment = False
-                print("i= ",i ,"valid_Assignment =  " ,valid_Assignment )
+                #print("i= ",i ,"valid_Assignment =  " ,valid_Assignment )
             if( (Assignment[i][col]==Assignment[row][col]) and (i != row) ):
                 valid_Assignment = False
-                print("i= ",i ,"valid_Assignment =  " ,valid_Assignment )
+                #print("i= ",i ,"valid_Assignment =  " ,valid_Assignment )
             # validate over the cage constraint
+            flag=0
+            idx_=0
+            res=0
+            cage_vals=[] 
+            for idx,cage in enumerate(CAGES) :
+                if([row+1 ,col+1] in cage) :
+                    print("there --------")
+                    print(cage)
+                    idx_=idx
+                    for cell in cage :
+                        val=Assignment[cell[0]-1][cell[1]-1]
+                        cage_vals.append(val)
+                        #print("ffsfsfs............")
+                        if(val == 0):
+                            flag=1
+                            print("here------------------------------------")
+                            print(Assignment[cell[0]-1][cell[1]-1])
+            
+            if (flag==0) :
+                constraint=CONSTRAINTS[idx_]
+                op=constraint['op']
+                constraint_value=constraint['constraint_value']
+                if(op == '+') :
+                    for item in cage_vals:
+                        res=res+item
+                if(op == 'x') :
+                    res=1
+                    for item in cage_vals:
+                        res=res*item
+                if(op == '-') :
+                    for item in cage_vals:
+                        res=abs(cage_vals[0]-cage_vals[1])
+                if(op == '÷') :
+                    for item in cage_vals:
+                        res=max(cage_vals)/min(cage_vals)
+
+                if(res != constraint_value) :
+                    valid_Assignment = False
+
+                            
+
             
             
             #...
@@ -53,7 +97,7 @@ def CSP_BACKTRACKING(Assignment):
             if(result == 'failure') :
                 row = 0
                 col = 0
-                print("enter")
+                #print("enter")
                 Assignment = [[0 for i in range(size)] for j in range(size)]
                 result = CSP_BACKTRACKING(Assignment)
             else :
@@ -114,7 +158,7 @@ def solveGame(GAMESIZE_, CAGES_, CONSTRAINTS_, technique_): # TO BE CHANGED TO A
     row = 0
     col = 0
     csp_BT = CSP_BACKTRACKING(Assignment)
-    print('Assignment : ' ,csp_BT)   
+    #print('Assignment : ' ,csp_BT)   
     return csp_BT
     #print(Assignment)
 
@@ -127,7 +171,7 @@ def solveGame(GAMESIZE_, CAGES_, CONSTRAINTS_, technique_): # TO BE CHANGED TO A
 
 
            
-# Assignment =  solveGame(3, 0, 0, 0)                 
+# Assignment =  solveGame(3, [[[3, 1], [3, 2]], [[2, 3], [2, 2]], [[2, 1], [1, 1], [1, 2], [1, 3]], [[3, 3]]] , [{'topleft': [3, 1], 'op': 'x', 'constraint_value': 3}, {'topleft': [2, 2], 'op': 'x', 'constraint_value': 6}, {'topleft': [1, 1], 'op': 'x', 'constraint_value': 6}, {'topleft': [3, 3], 'op': ' ', 'constraint_value': 2}], 0)                 
 # print('Assignment : ' ,Assignment)   
 
 
