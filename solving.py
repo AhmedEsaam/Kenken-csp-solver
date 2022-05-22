@@ -2,13 +2,15 @@ from asyncio.windows_events import NULL
 import random
 global GAMESIZE, CAGES, CONSTRAINTS, technique ,square_domains
 global row , col
-row = 0
-col = 0
+global cages_
+cages_= CAGES.copy()
+cages_.sort(key=len)
 def CSP_BACKTRACKING(Assignment):
     
     #complete assignment checking
     global GAMESIZE, CAGES, CONSTRAINTS, technique ,square_domains
     global row , col
+    global cages_
     size = GAMESIZE 
     valid_Assignment = True
     complete_Assignment = True
@@ -26,9 +28,9 @@ def CSP_BACKTRACKING(Assignment):
     #print(square_domains[row][col])
     for v in square_domains[row][col] :
         Assignment[row][col] = v
-        print("------------------------------------")
-        print(v)
-        print("------------------------------------")
+        # print("------------------------------------")
+        # print(v)
+        # print("------------------------------------")
         valid_Assignment = True
         #valid assignment checking
         for i in range(size) : 
@@ -40,69 +42,83 @@ def CSP_BACKTRACKING(Assignment):
                 valid_Assignment = False
                 #print("i= ",i ,"valid_Assignment =  " ,valid_Assignment )
             # validate over the cage constraint
-            flag=0
-            idx_=0
-            res=0
-            cage_vals=[] 
-            for idx,cage in enumerate(CAGES) :
-                if([row+1 ,col+1] in cage) :
-                    print("there --------")
-                    print(cage)
-                    idx_=idx
-                    for cell in cage :
-                        val=Assignment[cell[0]-1][cell[1]-1]
-                        cage_vals.append(val)
-                        #print("ffsfsfs............")
-                        if(val == 0):
-                            flag=1
-                            print("here------------------------------------")
-                            print(Assignment[cell[0]-1][cell[1]-1])
-            
-            if (flag==0) :
-                constraint=CONSTRAINTS[idx_]
-                op=constraint['op']
-                constraint_value=constraint['constraint_value']
-                if(op == '+') :
-                    for item in cage_vals:
-                        res=res+item
-                if(op == 'x') :
-                    res=1
-                    for item in cage_vals:
-                        res=res*item
-                if(op == '-') :
-                    for item in cage_vals:
-                        res=abs(cage_vals[0]-cage_vals[1])
-                if(op == '÷') :
-                    for item in cage_vals:
-                        res=max(cage_vals)/min(cage_vals)
+        flag=0
+        idx_=0
+        res=0
+        cage_vals=[] 
+        for idx,cage in enumerate(cages_) :
+            if([row+1 ,col+1] in cage) :
+                # print("there --------")
+                # print(cage)
+                idx_=idx
+                for cell in cage :
+                    val=Assignment[cell[0]-1][cell[1]-1]
+                    cage_vals.append(val)
+                    #print("ffsfsfs............")
 
-                if(res != constraint_value) :
-                    valid_Assignment = False
+                    if(val == 0):
+                        flag=1
+                        # print("here------------------------------------")
+                        # print(Assignment[cell[0]-1][cell[1]-1])
+                    else :
+                        print('val = ', val)
+        
+        if (flag==0) :
+            constraint=CONSTRAINTS[idx_]
+            op=constraint['op']
+            constraint_value=constraint['constraint_value']
+            if(op == '+') :
+                res=0
+                res=sum(cage_vals)
+            elif(op == 'x') :
+                res=1
+                for item in cage_vals:
+                    res = res * item
+            elif(op == '-') :
+                    res=abs(cage_vals[0]-cage_vals[1])
+            elif(op == '÷') :
+                    res=max(cage_vals)/min(cage_vals)
+            else:
+                res=0
+                res=sum(cage_vals)
+            if(res != int(constraint_value)) :
+                valid_Assignment = False
+            # else :
+            #     print("TRUEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE")
+            print('op : ' , op)
+            print('constraint value : ' , constraint_value)
+            print('result : ',res)
+            print('valid_Assignment :' , valid_Assignment)
+            print('cage :' , cage_vals)
+            # if(valid_Assignment == True) :
+            #     break
 
                             
 
             
-            
+
             #...
-        if(valid_Assignment ): 
+        if(valid_Assignment == True): 
             print("valid")
             print(Assignment)
-            if(col != size-1):
-                col +=1 
-            else:  #row != size-1
-                row += 1 
-                col = 0 
+            # if(col != size-1):
+            #     col +=1 
+            # else:  #row != size-1
+            #     row += 1 
+            #     col = 0 
+            for idx,cage in enumerate(cages_) :
+                col = cages_[]
         
             result = CSP_BACKTRACKING(Assignment)
-            if(result == 'failure') :
-                row = 0
-                col = 0
-                #print("enter")
-                Assignment = [[0 for i in range(size)] for j in range(size)]
-                result = CSP_BACKTRACKING(Assignment)
-            else :
+            if(result != 'failure') :
+            #     row = 0
+            #     col = 0
+            #     #print("enter")
+            #     Assignment = [[0 for i in range(size)] for j in range(size)]
+            #     result = CSP_BACKTRACKING(Assignment)
+            # else :
                 return result
-
+                
         #else if(!valid_Assignment)  assign another value from square domains  by next iteration 
     return 'failure'
 
@@ -158,6 +174,11 @@ def solveGame(GAMESIZE_, CAGES_, CONSTRAINTS_, technique_): # TO BE CHANGED TO A
     row = 0
     col = 0
     csp_BT = CSP_BACKTRACKING(Assignment)
+    while(csp_BT == 'failure') :
+                    row = 0
+                    col = 0
+                    #print("enter")
+                    csp_BT = CSP_BACKTRACKING(Assignment)
     #print('Assignment : ' ,csp_BT)   
     return csp_BT
     #print(Assignment)
