@@ -2,8 +2,6 @@ from asyncio.windows_events import NULL
 import random
 global GAMESIZE, CAGES, CONSTRAINTS, technique ,square_domains
 global row , col
-row = 0
-col = 0
 def CSP_BACKTRACKING(Assignment):
     
     #complete assignment checking
@@ -26,9 +24,9 @@ def CSP_BACKTRACKING(Assignment):
     #print(square_domains[row][col])
     for v in square_domains[row][col] :
         Assignment[row][col] = v
-        print("------------------------------------")
-        print(v)
-        print("------------------------------------")
+        # print("------------------------------------")
+        # print(v)
+        # print("------------------------------------")
         valid_Assignment = True
         #valid assignment checking
         for i in range(size) : 
@@ -40,51 +38,54 @@ def CSP_BACKTRACKING(Assignment):
                 valid_Assignment = False
                 #print("i= ",i ,"valid_Assignment =  " ,valid_Assignment )
             # validate over the cage constraint
-            flag=0
-            idx_=0
-            res=0
-            cage_vals=[] 
-            for idx,cage in enumerate(CAGES) :
-                if([row+1 ,col+1] in cage) :
-                    print("there --------")
-                    print(cage)
-                    idx_=idx
-                    for cell in cage :
-                        val=Assignment[cell[0]-1][cell[1]-1]
-                        cage_vals.append(val)
-                        #print("ffsfsfs............")
-                        if(val == 0):
-                            flag=1
-                            print("here------------------------------------")
-                            print(Assignment[cell[0]-1][cell[1]-1])
-            
-            if (flag==0) :
-                constraint=CONSTRAINTS[idx_]
-                op=constraint['op']
-                constraint_value=constraint['constraint_value']
-                if(op == '+') :
-                    for item in cage_vals:
-                        res=res+item
-                if(op == 'x') :
-                    res=1
-                    for item in cage_vals:
-                        res=res*item
-                if(op == '-') :
-                    for item in cage_vals:
-                        res=abs(cage_vals[0]-cage_vals[1])
-                if(op == '÷') :
-                    for item in cage_vals:
-                        res=max(cage_vals)/min(cage_vals)
+        flag=0
+        idx_=0
+        res=0
+        cage_vals=[] 
+        for idx,cage in enumerate(CAGES) :
+            if([row+1 ,col+1] in cage) :
+                # print("there --------")
+                # print(cage)
+                idx_=idx
+                for cell in cage :
+                    val=Assignment[cell[0]-1][cell[1]-1]
+                    cage_vals.append(val)
+                    #print("ffsfsfs............")
 
-                if(res != constraint_value) :
-                    valid_Assignment = False
+                    if(val == 0):
+                        flag=1
+                        # print("here------------------------------------")
+                        # print(Assignment[cell[0]-1][cell[1]-1])
+        
+        if (flag==0) :
+            constraint=CONSTRAINTS[idx_]
+            op=constraint['op']
+            constraint_value=constraint['constraint_value']
+            if(op == '+') :
+                res=0
+                res=sum(cage_vals)
+            elif(op == 'x') :
+                res=1
+                for item in cage_vals:
+                    res = res * item
+            elif(op == '-') :
+                    res=abs(cage_vals[0]-cage_vals[1])
+            elif(op == '÷') :
+                    res=max(cage_vals)/min(cage_vals)
+            else:
+                res=0
+                res=sum(cage_vals)
+            if(res != int(constraint_value)) :
+                valid_Assignment = False
+            # else :
+            #     print("TRUEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE")
+            print('op : ' , op)
+            print('constraint value : ' , constraint_value)
+            print('result : ',res)
+            print('valid_Assignment :' , valid_Assignment)
+            print('cage :' , cage_vals)
 
-                            
-
-            
-            
-            #...
-        if(valid_Assignment ): 
+        if(valid_Assignment == True): 
             print("valid")
             print(Assignment)
             if(col != size-1):
@@ -94,16 +95,17 @@ def CSP_BACKTRACKING(Assignment):
                 col = 0 
         
             result = CSP_BACKTRACKING(Assignment)
-            if(result == 'failure') :
+            if(result != 'failure') :
                 row = 0
                 col = 0
-                #print("enter")
-                Assignment = [[0 for i in range(size)] for j in range(size)]
-                result = CSP_BACKTRACKING(Assignment)
-            else :
+            #     #print("enter")
+            #     Assignment = [[0 for i in range(size)] for j in range(size)]
+            #     result = CSP_BACKTRACKING(Assignment)
+            # else :
                 return result
-
+                
         #else if(!valid_Assignment)  assign another value from square domains  by next iteration 
+        print('failure')
     return 'failure'
 
 def solveGame(GAMESIZE_, CAGES_, CONSTRAINTS_, technique_): # TO BE CHANGED TO A CSP SOLVER
@@ -116,29 +118,22 @@ def solveGame(GAMESIZE_, CAGES_, CONSTRAINTS_, technique_): # TO BE CHANGED TO A
     '''
     (GAMESIZE) : is the side size of the game
         if the game size was (3*3) then GAMESIZE = 3, and solution might be :
-
         [[2, 3, 1],
          [1, 2, 3],
          [3, 1, 2]]
-
     (CAGES) : includes the (row,col) indices of squares in each cage.
         A CAGES distribution might be:
-
         [[[3, 1], [3, 2], [3, 3], [2, 3]],
          [[2, 2], [2, 1], [1, 1]],
          [[1, 3], [1, 2]]]
-
     (CONSTRAINTS) : includes the operation used in each cage (+,-,x,÷), the constraint value,
         and the most top left square in each cage which is irrelevant in this function context
         - top left square becomes handy when displaying the board only- 
         an example of CONSTRAINTS might be:
-
         [{'topleft': [2, 3], 'op': 'x', 'constraint_value': 18},
          {'topleft': [1, 1], 'op': 'x', 'constraint_value': 4},
          {'topleft': [1, 2], 'op': '+', 'constraint_value': 4}]
-
     (technique) : is a string value of the solving technique used one of ('BT', 'FC', 'AC')
-
         'BT' : Backtracking
         'FC' : Backtracking with forward checking
         'AC' : Backtracking with forward checking and arc consistency
@@ -158,6 +153,12 @@ def solveGame(GAMESIZE_, CAGES_, CONSTRAINTS_, technique_): # TO BE CHANGED TO A
     row = 0
     col = 0
     csp_BT = CSP_BACKTRACKING(Assignment)
+    while(csp_BT == 'failure') :
+                    Assignment = [[0 for i in range(size)] for j in range(rows)]
+                    row = 0
+                    col = 0
+                    #print("enter")
+                    csp_BT = CSP_BACKTRACKING(Assignment)
     #print('Assignment : ' ,csp_BT)   
     return csp_BT
     #print(Assignment)
@@ -172,11 +173,4 @@ def solveGame(GAMESIZE_, CAGES_, CONSTRAINTS_, technique_): # TO BE CHANGED TO A
 
            
 # Assignment =  solveGame(3, [[[3, 1], [3, 2]], [[2, 3], [2, 2]], [[2, 1], [1, 1], [1, 2], [1, 3]], [[3, 3]]] , [{'topleft': [3, 1], 'op': 'x', 'constraint_value': 3}, {'topleft': [2, 2], 'op': 'x', 'constraint_value': 6}, {'topleft': [1, 1], 'op': 'x', 'constraint_value': 6}, {'topleft': [3, 3], 'op': ' ', 'constraint_value': 2}], 0)                 
-# print('Assignment : ' ,Assignment)   
-
-
-
-
-
- #Hello
-    #HHHH
+# print('Assignment : ' ,Assignment)  
