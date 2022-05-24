@@ -2,11 +2,15 @@ from asyncio.windows_events import NULL
 import random
 global GAMESIZE, CAGES, CONSTRAINTS, technique ,square_domains
 global row , col
+global cages_h
+global cell_index
+
 def CSP_BACKTRACKING(Assignment):
-    
     #complete assignment checking
     global GAMESIZE, CAGES, CONSTRAINTS, technique ,square_domains
     global row , col
+    global cages_h
+    global cell_index
     size = GAMESIZE 
     valid_Assignment = True
     complete_Assignment = True
@@ -79,33 +83,41 @@ def CSP_BACKTRACKING(Assignment):
                 valid_Assignment = False
             # else :
             #     print("TRUEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE")
-            print('op : ' , op)
-            print('constraint value : ' , constraint_value)
-            print('result : ',res)
-            print('valid_Assignment :' , valid_Assignment)
-            print('cage :' , cage_vals)
+ ## OUTPUT Trial--------------------------------------
+            # print('op : ' , op)
+            # print('constraint value : ' , constraint_value)
+            # print('result : ',res)
+            # print('valid_Assignment :' , valid_Assignment)
+            # print('cage :' , cage_vals)
 
-        if(valid_Assignment == True): 
+        if(valid_Assignment == True):
             print("valid")
             print(Assignment)
-            if(col != size-1):
-                col +=1 
-            else:  #row != size-1
-                row += 1 
-                col = 0 
+            # if(col != size-1):
+            #     col +=1 
+            # else:  #row != size-1
+            #     row += 1 
+            #     col = 0 
+            if(cell_index < (size*size)-1):
+                cell_index += 1
+                row =cages_h[cell_index][0]-1
+                print('rowwwwwww',row)
+                col =cages_h[cell_index][1]-1 
         
             result = CSP_BACKTRACKING(Assignment)
-            if(result != 'failure') :
-                row = 0
-                col = 0
+            # if(result != 'failure') :
+            #     # row = 0
+            #     # col = 0
+            #     result = CSP_BACKTRACKING(Assignment)
+            #     return result
             #     #print("enter")
             #     Assignment = [[0 for i in range(size)] for j in range(size)]
             #     result = CSP_BACKTRACKING(Assignment)
             # else :
-                return result
+            return result
                 
         #else if(!valid_Assignment)  assign another value from square domains  by next iteration 
-        print('failure')
+    print('failure')
     return 'failure'
 
 def solveGame(GAMESIZE_, CAGES_, CONSTRAINTS_, technique_): # TO BE CHANGED TO A CSP SOLVER
@@ -150,22 +162,46 @@ def solveGame(GAMESIZE_, CAGES_, CONSTRAINTS_, technique_): # TO BE CHANGED TO A
     size = GAMESIZE
     rows, cols = (size, size)
 
+    ## for least constrained heurstic
+    global cages_h
+    global cell_index
+    
+    cell_index=0
+    cages_h=CAGES.copy()
+    cages_h.sort(key = len)
+    temp=[]
+    for cage in cages_h :
+        for cell in cage :
+            temp.append(cell)  
+    cages_h=temp
+        
+
     # initialize vars domains [1:size]
     square_domains = [[[i+1 for i in range(rows)] for j in range(cols)] for k in range(size)]
     # print(square_domains)
 
     # Empty Assignment : initialize Assignment by zero 
     
-    Assignment = [[0 for i in range(size)] for j in range(rows)]
-    row = 0
-    col = 0
-    csp_BT = CSP_BACKTRACKING(Assignment)
-    while(csp_BT == 'failure') :
+    # Assignment = [[0 for i in range(size)] for j in range(rows)]
+    # # row = 0
+    # # col = 0
+    # cell_index=0
+    # row =cages_h[cell_index][0]-1
+    # col =cages_h[cell_index][1]-1
+    # csp_BT = CSP_BACKTRACKING(Assignment)
+    while(True) :
                     Assignment = [[0 for i in range(size)] for j in range(rows)]
-                    row = 0
-                    col = 0
+                    cell_index=0
+                    row =cages_h[cell_index][0]-1
+                    col =cages_h[cell_index][1]-1
+                    # row=0
+                    # col=0
                     #print("enter")
                     csp_BT = CSP_BACKTRACKING(Assignment)
+                    if(csp_BT != 'failure') :
+                        break
+
+
     #print('Assignment : ' ,csp_BT)   
     return csp_BT
     #print(Assignment)
