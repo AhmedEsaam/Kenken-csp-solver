@@ -4,7 +4,7 @@ global GAMESIZE, CAGES, CONSTRAINTS, technique ,square_domains
 global row , col
 global cages_h
 global cell_index
-def forward_checking( square_domains, x , v, Assignment):
+def forward_checking( domains, x , v, op, constraint_value, idx_, cell_idx_, res, Assignment):
     global GAMESIZE 
     for i in range(GAMESIZE) : 
         # validate over the row and col
@@ -17,6 +17,40 @@ def forward_checking( square_domains, x , v, Assignment):
         if (i != row) :
             if v in square_domains[i][col] : 
                square_domains[i][col].remove(v)
+
+    # change domains of cells in same cage
+    # '''
+    cage = CAGES[idx_]
+    cnst_v = constraint_value
+    # print('op :', op)
+    # print('cage:', cage)
+    # print(x)
+    for cell in cage:
+        row_next = cell[0]-1
+        col_next = cell[1]-1
+        if ((row != row_next) or (col != col_next)) :
+            
+            if (op == '-'):
+                if (v - cnst_v > 0):
+                    next_domain = []
+                    if ((v - cnst_v) in domains[row_next][col_next]) :
+                        next_domain.append(v - cnst_v)
+                    if ((v + cnst_v) in domains[row_next][col_next]) :
+                        next_domain.append(v + cnst_v)
+                    domains[row_next][col_next] = next_domain
+                elif (v - cnst_v < 0):
+                    if ((v + cnst_v) in domains[row_next][col_next]) :
+                        domains[row_next][col_next] = [v + cnst_v]
+                else:
+                    domains[row_next][col_next] = []
+
+            if (op == '÷'):
+                next_domain = []
+                if (int(v / cnst_v) in domains[row_next][col_next]) :
+                    next_domain.append(int(v / cnst_v))
+                if ((v * cnst_v) in domains[row_next][col_next]) :
+                    next_domain.append(v * cnst_v)
+                domains[row_next][col_next] = next_domain
 
     return square_domains        
 
