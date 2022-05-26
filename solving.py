@@ -1,5 +1,9 @@
 from asyncio.windows_events import NULL
+import queue
 import random
+from xmlrpc.client import INVALID_XMLRPC
+
+from numpy import empty
 global GAMESIZE, CAGES, CONSTRAINTS, technique #,square_domains
 global row , col
 global cages_h
@@ -118,9 +122,68 @@ def forward_checking( domains, x , v, op, constraint_value, idx_, cell_idx_, res
                             next_domain.remove(d)
                     domains[row_next][col_next] = next_domain
     return domains  
+def REMOVE_INCONSISTENT_VALUES(xi,xj,domains):
+    removed=False
+    xi_r=xi[0]-1
+    xi_c=xi[1]-1
+    xj_r=xj[0]-1
+    xj_c=xj[1]-1
+    op=''
+    constraint_value=0
+    same_2_sized_cage=0
+    for idx,cage in enumerate(CAGES) :
+        if([xi_r+1,xi_c+1] in cage) and ([xj_r+1,xj_c+1] in cage) and len(cage)==2  :
+            op=CONSTRAINTS[idx]['op']
+            constraint_value=CONSTRAINTS[idx]['constraint_value']
+            same_2_sized_cage=1
+
+    satisfied=0
+    for v in domains[xi_r][xi_c]:
+        for u in domains[xj_r][xj_c]:
+            if u !=v:
+                satisfied=1
+            if same_2_sized_cage==1:
+                if op=='+':
+                    if u+v==constraint_value:
+                        satisfied=1
+                elif op=='-':
+                    if abs(u-v)==constraint_value:
+                        satisfied=1
+                elif op=='x':
+                    if u*v==constraint_value:
+                        satisfied=1
+                elif op=='÷':
+                    if int(max(u,v)/min(u,v))==constraint_value:
+                        satisfied=1
+                
+        if satisfied==0:
+            domains[xi_r][xi_c].remove(v)
+            removed=True
+
+    return removed,domains
+
 
 def arc_consistency(domains, x , v, op, constraint_value, idx_, cell_idx_, res, Assignment):
-    return domains  
+    global neighbors
+    X1=[1,1]
+    X2=[1,2]
+    queue_ =[(X1,X2),(X2,X1)]
+    while queue_ !=[]:
+        (Xi,Xj)=queue_.pop()
+        Xi_r=Xi[0]-1
+        Xi_c=Xi[1]-1
+        removed,domains=REMOVE_INCONSISTENT_VALUES(Xi, Xj,domains)
+        if removed:
+            if len(domains[Xi_r][Xi_c])==0:
+                return False,domains
+            for xk in neighbors[Xi_r][Xi_c]:
+                if xk!=Xj:
+                    if (xk,Xi) not in queue_:
+                        queue_.append((xk,Xi))
+    return True,domains
+
+
+  
    
 
 def CSP_BACKTRACKING(Assignment, square_domains):
@@ -129,6 +192,7 @@ def CSP_BACKTRACKING(Assignment, square_domains):
     global row , col
     global cages_h
     global cell_index
+    global neighbors
     size = GAMESIZE 
     valid_Assignment = True
     complete_Assignment = True
@@ -177,7 +241,6 @@ def CSP_BACKTRACKING(Assignment, square_domains):
             cell_idx = []
             res=0
             cage_vals=[] 
-
             #append values in this cage to cage_vals to be calculated .
             # if there is zero value then valid assignment is true as it hasn't been finished yet (flag =1)
             # if there is no zero value then the cage is full and we should calculate its value and check the constrain
@@ -222,6 +285,7 @@ def CSP_BACKTRACKING(Assignment, square_domains):
                     valid_Assignment = False
 
             #Optional if you need Forward Checking :
+            
             if (technique=="FC" and valid_Assignment == True): 
                 x = [row,col]
                 domains = forward_checking(square_domains, x , v, op, constraint_value, idx_, cell_idx_, res,cage_vals, Assignment)
@@ -235,8 +299,11 @@ def CSP_BACKTRACKING(Assignment, square_domains):
             
             elif (technique=="AC" and valid_Assignment == True):
                 x = [row,col]
-                domains = arc_consistency(square_domains, x , v, op, constraint_value, idx_, cell_idx_, res, Assignment)
-                square_domains = domains 
+                
+
+                consistency,square_domains = arc_consistency(square_domains, x , v, op, constraint_value, idx_, cell_idx_, res, Assignment)
+                if not consistency:
+                    valid_Assignment == False
                
                     
 
@@ -275,7 +342,7 @@ def solveGame(GAMESIZE_, CAGES_, CONSTRAINTS_, technique_): # TO BE CHANGED TO A
     ## for least constrained heurstic
     global cages_h
     global cell_index
-    
+    global neighbors
     cell_index=0
     cages_h=CAGES.copy()
     cages_h.sort(key = len)
@@ -287,6 +354,13 @@ def solveGame(GAMESIZE_, CAGES_, CONSTRAINTS_, technique_): # TO BE CHANGED TO A
         
     evaluate=0
     Possibilities=(GAMESIZE)**(GAMESIZE**2) #Possibilities of all boards
+    neighbors =[[[] for j in range(cols)] for k in range(size)]
+    for r in range(GAMESIZE):
+        for c in range(GAMESIZE):
+            for n in range(GAMESIZE):
+                if (n!=c) and (n!=r):
+                    neighbors[r][c].append([r+1,n+1])
+                    neighbors[r][c].append([n+1,c+1])
     while(True) :
         #initialize the domain
         square_domains = [[[i+1 for i in range(rows)] for j in range(cols)] for k in range(size)]
