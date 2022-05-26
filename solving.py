@@ -34,7 +34,7 @@ global evaluate
 
 def forward_checking( domains, x , v, op, constraint_value, idx_, cell_idx, res, Assignment):
     global GAMESIZE, CAGES
-    # change domains of celss in same row and col
+    # change domains of cells in same row and col
     row = x[0]
     col = x[1]
     for i in range(GAMESIZE) : 
@@ -43,7 +43,7 @@ def forward_checking( domains, x , v, op, constraint_value, idx_, cell_idx, res,
             if v in domains[i][col] : 
                domains[i][col].remove(v) 
 
-    # change domains of celss in same cage
+    # change domains of cells in same cage
     # '''
     cage = CAGES[idx_]
     cnst_v = constraint_value
