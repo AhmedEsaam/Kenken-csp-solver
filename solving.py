@@ -5,7 +5,7 @@ global row , col
 global cages_h
 global cell_index
 global evaluate
-evaluate=0
+
 
 '''
     (GAMESIZE) : is the side size of the game
@@ -38,10 +38,8 @@ def forward_checking( domains, x , v, op, constraint_value, idx_, cell_idx, res,
     row = x[0]
     col = x[1]
     for i in range(GAMESIZE) : 
-        if (i != col) :
             if v in domains[row][i] :
                domains[row][i].remove(v) 
-        if (i != row) :
             if v in domains[i][col] : 
                domains[i][col].remove(v) 
 
@@ -227,6 +225,8 @@ def CSP_BACKTRACKING(Assignment, square_domains):
 def solveGame(GAMESIZE_, CAGES_, CONSTRAINTS_, technique_): # TO BE CHANGED TO A CSP SOLVER
     global GAMESIZE, CAGES, CONSTRAINTS, technique#, square_domains
     global row , col
+    global evaluate
+
     GAMESIZE = GAMESIZE_
     CAGES = CAGES_
     CONSTRAINTS = CONSTRAINTS_
@@ -249,7 +249,7 @@ def solveGame(GAMESIZE_, CAGES_, CONSTRAINTS_, technique_): # TO BE CHANGED TO A
             temp.append(cell)  
     cages_h=temp
         
-
+    evaluate=0
     while(True) :
         square_domains = [[[i+1 for i in range(rows)] for j in range(cols)] for k in range(size)]
         for idx, cage in enumerate(CAGES):
