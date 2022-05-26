@@ -253,9 +253,11 @@ def eventHandler():
                 pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND)
             elif SOLVE_RECT.collidepoint(pos):
                 # Solve game
-                solved = GAME  # comment
-                # solved = solveGame(GAMESIZE, CAGES, CONSTRAINTS, 'BT')
+               # solved = GAME  # comment
+            
+                solved = solveGame(GAMESIZE, CAGES, CONSTRAINTS, 'BT')
                 GAMEDISPLAYED = solved
+                print(solved)
                 pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND)
             elif RESET_RECT.collidepoint(pos):
                 # Reset game
