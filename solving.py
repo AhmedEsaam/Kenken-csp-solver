@@ -130,7 +130,7 @@ def CSP_BACKTRACKING(Assignment, square_domains):
     
     if(complete_Assignment):
         return Assignment
-    
+    #########################
     #assign value from square domains
     random.shuffle(square_domains[row][col])
 
