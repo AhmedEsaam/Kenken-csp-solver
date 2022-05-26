@@ -3,7 +3,6 @@ import queue
 import random
 from xmlrpc.client import INVALID_XMLRPC
 
-from numpy import empty
 global GAMESIZE, CAGES, CONSTRAINTS, technique #,square_domains
 global row , col
 global cages_h
@@ -37,7 +36,7 @@ global evaluate
 def forward_checking( domains, x , v, op, constraint_value, idx_, cell_idx_, res , cage_vals, Assignment):
     global GAMESIZE, CAGES
     global evaluate
-    # change domains of cells in same row and col
+
     c=cell_idx_
     c1=-1  
     c2=-1
@@ -51,7 +50,8 @@ def forward_checking( domains, x , v, op, constraint_value, idx_, cell_idx_, res
             res=1
             for item in cage_vals:
                 res = res * item
-
+    
+    # change domains of cells in same row and col
     row = x[0]
     col = x[1]
     for i in range(GAMESIZE) : 
@@ -122,6 +122,7 @@ def forward_checking( domains, x , v, op, constraint_value, idx_, cell_idx_, res
                             next_domain.remove(d)
                     domains[row_next][col_next] = next_domain
     return domains  
+
 def REMOVE_INCONSISTENT_VALUES(xi,xj,domains):
     removed=False
     xi_r=xi[0]-1
