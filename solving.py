@@ -221,11 +221,13 @@ def CSP_BACKTRACKING(Assignment, square_domains):
         return Assignment
     #########################
     #assign value from square domains
+    print('\n')
     random.shuffle(square_domains[row][col])
 
     #domain_before store the domain before being changed
     domain_before = square_domains.copy()
-
+    print(Assignment)
+    continue_flag='0'
     for v in square_domains[row][col] :
         #evaluate according to number of values being tried
         evaluate+=1
@@ -247,7 +249,6 @@ def CSP_BACKTRACKING(Assignment, square_domains):
                 valid_Assignment = False
             if( (Assignment[i][col]==Assignment[row][col]) and (i != row) ):
                 valid_Assignment = False
-
         #validate over the cage constraint -------------------------------------------------------------------------------------
         if(valid_Assignment == True):
             flag=0
@@ -273,6 +274,7 @@ def CSP_BACKTRACKING(Assignment, square_domains):
             #registering the value of cage constraint and its operation to check the constraint
             constraint=CONSTRAINTS[idx_]
             op=constraint['op']
+            continue_flag=op
             constraint_value=constraint['constraint_value']
             cell_idx_ = []
             if (len(CAGES[idx_]) - len(cage_vals) == 1 ) :
@@ -355,6 +357,14 @@ def CSP_BACKTRACKING(Assignment, square_domains):
                 #if no failure happens return result else look for another value v in squared domain
                 if result !=  'failure':
                     return result
+    
+    #here we say there is no need to call failure if the op ='' as it is only one value and this value of least possible constrain and it is achieved
+    while   continue_flag == '' :
+                    result = CSP_BACKTRACKING(Assignment, square_domains)
+                    print('continue flag' ,continue_flag)
+                    if(result != 'failure') :
+                        return result
+
     #the failure indicate termination of this process so we have to get back to the root of recursion and try different values
     print('failure')
     return 'failure'
