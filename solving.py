@@ -1,7 +1,4 @@
-from asyncio.windows_events import NULL
-import queue
 import random
-from xmlrpc.client import INVALID_XMLRPC
 
 global GAMESIZE, CAGES, CONSTRAINTS, technique #,square_domains
 global row , col
@@ -14,11 +11,13 @@ global evaluate
         [[2, 3, 1],
          [1, 2, 3],
          [3, 1, 2]]
+
     (CAGES) : includes the (row,col) indices of squares in each cage.
         A CAGES distribution might be:
         [[[3, 1], [3, 2], [3, 3], [2, 3]],
          [[2, 2], [2, 1], [1, 1]],
          [[1, 3], [1, 2]]]
+
     (CONSTRAINTS) : includes the operation used in each cage (+,-,x,÷), the constraint value,
         and the most top left square in each cage which is irrelevant in this function context
         - top left square becomes handy when displaying the board only- 
@@ -26,12 +25,13 @@ global evaluate
         [{'topleft': [2, 3], 'op': 'x', 'constraint_value': 18},
          {'topleft': [1, 1], 'op': 'x', 'constraint_value': 4},
          {'topleft': [1, 2], 'op': '+', 'constraint_value': 4}]
+
     (technique) : is a string value of the solving technique used one of ('BT', 'FC', 'AC')
         'BT' : Backtracking
         'FC' : Backtracking with forward checking
         'AC' : Backtracking with forward checking and arc consistency
     
-    '''
+'''
 
 def forward_checking( domains, x , v, op, constraint_value, idx_, cell_idx_, res , cage_vals, Assignment):
     global GAMESIZE, CAGES
@@ -354,7 +354,7 @@ def CSP_BACKTRACKING(Assignment, square_domains):
                 if result !=  'failure':
                     return result
     #the failure indicate termination of this process so we have to get back to the root of recursion and try different values
-    print('failure')
+    # print('failure')
     return 'failure'
 
 def solveGame(GAMESIZE_, CAGES_, CONSTRAINTS_, technique_): # TO BE CHANGED TO A CSP SOLVER
@@ -377,7 +377,7 @@ def solveGame(GAMESIZE_, CAGES_, CONSTRAINTS_, technique_): # TO BE CHANGED TO A
     global neighbors
     cell_index=0
     cages_h=CAGES.copy()
-    cages_h.sort(key = len)
+    cages_h.sort(key = len, reverse = True)
     temp=[]
     for cage in cages_h :
         for cell in cage :
@@ -411,6 +411,7 @@ def solveGame(GAMESIZE_, CAGES_, CONSTRAINTS_, technique_): # TO BE CHANGED TO A
         csp_BT = CSP_BACKTRACKING(Assignment, square_domains)
 
         #(GAMESIZE)**(GAMESIZE**2) * GAMESIZE**2 this equation indicates all possible number of values can be assigned if it excceds the limit
+        Possibilities = 50000
         if(evaluate >= Possibilities) :
             print('couldn\'t find value ')
             break
@@ -418,12 +419,28 @@ def solveGame(GAMESIZE_, CAGES_, CONSTRAINTS_, technique_): # TO BE CHANGED TO A
         if(csp_BT != 'failure') :
             break 
     print(evaluate)
-    return csp_BT
+    num_assignments = evaluate
+    return csp_BT, num_assignments
 
  
 
 
-           
-# Assignment =  solveGame(3, [[[3, 1], [3, 2]], [[2, 3], [2, 2]], [[2, 1], [1, 1], [1, 2], [1, 3]], [[3, 3]]] , [{'topleft': [3, 1], 'op': 'x', 'constraint_value': 3}, {'topleft': [2, 2], 'op': 'x', 'constraint_value': 6}, {'topleft': [1, 1], 'op': 'x', 'constraint_value': 6}, {'topleft': [3, 3], 'op': ' ', 'constraint_value': 2}], 0)                 
-# print('Assignment : ' ,Assignment)   
+''' 3*3 test example 
+Assignment, _ =  solveGame(3, [[[3, 1], [3, 2]], [[2, 3], [2, 2]], [[2, 1], [1, 1], [1, 2], [1, 3]], [[3, 3]]] , [{'topleft': [3, 1], 'op': 'x', 'constraint_value': 3}, {'topleft': [2, 2], 'op': 'x', 'constraint_value': 6}, {'topleft': [1, 1], 'op': 'x', 'constraint_value': 6}, {'topleft': [3, 3], 'op': ' ', 'constraint_value': 2}], 0)                 
+print('Assignment : ' ,Assignment)  
+#''' 
+
+''' 4*4 test example
+Assignment, _ =  solveGame(4, [[[3, 2], [3, 3], [3, 4], [4, 4]], [[1, 4], [1, 3]], [[2, 2], [2, 3], [2, 4]], [[3, 1], [4, 1], [4, 2], [4, 3]], [[1, 1], [1, 2]], [[2, 1]]] \
+    ,[{'topleft': [3, 2], 'op': 'x', 'constraint_value': 18}, {'topleft': [1, 3], 'op': '+', 'constraint_value': 6}, {'topleft': [2, 2], 'op': 'x', 'constraint_value': 8}, {'topleft': [3, 1], 'op': 'x', 'constraint_value': 32}, {'topleft': [1, 1], 'op': 'x', 'constraint_value': 3}, {'topleft': [2, 1], 'op': ' ', 'constraint_value': 3}]\
+    ,'FC')                 
+print('Assignment : ' ,Assignment)   
+#'''
+
+# ''' 5*5 test example
+Assignment, _ =  solveGame(5, [[[3, 3], [3, 4], [3, 5]], [[2, 3], [2, 4], [2, 5], [1, 5]], [[1, 1], [1, 2], [1, 3]], [[4, 5], [4, 4], [4, 3], [4, 2]], [[2, 1], [2, 2], [3, 2], [3, 1]], [[4, 1], [5, 1]], [[1, 4]], [[5, 2], [5, 3]], [[5, 4], [5, 5]]] \
+    ,[{'topleft': [3, 3], 'op': '+', 'constraint_value': 9}, {'topleft': [1, 5], 'op': '+', 'constraint_value': 12}, {'topleft': [1, 1], 'op': 'x', 'constraint_value': 15}, {'topleft': [4, 2], 'op': '+', 'constraint_value': 13}, {'topleft': [2, 1], 'op': 'x', 'constraint_value': 32}, {'topleft': [4, 1], 'op': '+', 'constraint_value': 7}, {'topleft': [1, 4], 'op': ' ', 'constraint_value': 4}, {'topleft': [5, 2], 'op': '÷', 'constraint_value': 4}, {'topleft': [5, 4], 'op': '-', 'constraint_value': 1}]\
+    ,'FC')                 
+print('Assignment : ' ,Assignment)   
+#'''
 
