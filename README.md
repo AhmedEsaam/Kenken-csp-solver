@@ -1,3 +1,9 @@
+# Kenken-csp-solver
+Exploring ho to solve Kenken games using CSP techniques.<br>
+
+## Game generator
+Generate new game.<br>
+
 ## CSP-solver solve using following techniques : <br> <br>
 ## 1- Backtracking : <br>
 Assign values from the domain and checking the constraints if it fail it check another value from the domain , until it ends the domain  only at this time it return 'failure' and try another set of values (same domains different order) . <br>
