@@ -93,7 +93,7 @@ def forward_checking( domains, x , v, op, constraint_value, idx_, cell_idx_, res
                     next_domain.append(v * cnst_v)
                 domains[row_next][col_next] = next_domain
 
-            #we needed it at the begining but now this is trivial but just we use it for readability purpose 
+            #we needed it at the begining but now this is trivial but just we use it for readability purpose
             if res > 0 : 
                 if (op == 'x'):
                     next_domain = domains[row_next][col_next]
@@ -107,7 +107,8 @@ def forward_checking( domains, x , v, op, constraint_value, idx_, cell_idx_, res
                     
                     #else , add all possible values
                     else :
-                        for d in next_domain:
+                        next_domain_ = next_domain.copy()
+                        for d in next_domain_:
                             if (d > (cnst_v / res)):
                                     next_domain.remove(d)
                             elif ( ((cnst_v / res)% d) != 0) and (d != 1) :
@@ -128,7 +129,8 @@ def forward_checking( domains, x , v, op, constraint_value, idx_, cell_idx_, res
 
                     #else , add all possible values
                     else:
-                        for d in next_domain:
+                        next_domain_ = next_domain.copy()
+                        for d in next_domain_:
                             if (d > (cnst_v - res)):
                                 next_domain.remove(d)
                     domains[row_next][col_next] = next_domain
