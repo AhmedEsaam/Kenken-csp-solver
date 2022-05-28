@@ -227,10 +227,11 @@ def CSP_BACKTRACKING(Assignment, square_domains):
     #domain_before store the domain before being changed
     domain_before = square_domains.copy()
     current_Assignment = Assignment.copy()
-    row_before= row
-    col_before= col
+    # row_before= row
+    # col_before= col
     for v in square_domains[row][col] :
         print(Assignment)
+        print(evaluate)
         #evaluate according to number of values being tried
         evaluate+=1
 
@@ -238,8 +239,8 @@ def CSP_BACKTRACKING(Assignment, square_domains):
         #Note : the domain is not completely reseted it is just restored to what it was at this variable.
         square_domains = domain_before.copy()
         Assignment=current_Assignment.copy()
-        row= row_before
-        col= col_before
+        # row= row_before
+        # col= col_before
 
         #assign random value v from the domain
         Assignment[row][col] = v
@@ -359,7 +360,6 @@ def CSP_BACKTRACKING(Assignment, square_domains):
                 #if no failure happens return result else look for another value v in squared domain
                 if result !=  'failure':
                     return result
-
     #the failure indicate termination of this process so we have to get back to the root of recursion and try different values
     print('failure')
     return 'failure'
