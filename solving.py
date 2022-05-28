@@ -226,15 +226,20 @@ def CSP_BACKTRACKING(Assignment, square_domains):
 
     #domain_before store the domain before being changed
     domain_before = square_domains.copy()
-    print(Assignment)
-    continue_flag='0'
+    current_Assignment = Assignment.copy()
+    row_before= row
+    col_before= col
     for v in square_domains[row][col] :
+        print(Assignment)
         #evaluate according to number of values being tried
         evaluate+=1
 
         #restore the original domain before it has been changed (at this value).
-        #Note : the domain is not completely reseted it just restored to what it was at this variable.
+        #Note : the domain is not completely reseted it is just restored to what it was at this variable.
         square_domains = domain_before.copy()
+        Assignment=current_Assignment.copy()
+        row= row_before
+        col= col_before
 
         #assign random value v from the domain
         Assignment[row][col] = v
@@ -274,7 +279,6 @@ def CSP_BACKTRACKING(Assignment, square_domains):
             #registering the value of cage constraint and its operation to check the constraint
             constraint=CONSTRAINTS[idx_]
             op=constraint['op']
-            continue_flag=op
             constraint_value=constraint['constraint_value']
             cell_idx_ = []
             if (len(CAGES[idx_]) - len(cage_vals) == 1 ) :
@@ -339,9 +343,7 @@ def CSP_BACKTRACKING(Assignment, square_domains):
                 x = [row,col]
                 consistency,square_domains = arc_consistency(square_domains, x , v, op, constraint_value, idx_, cell_idx_, res, Assignment)
                 if not consistency:
-                    valid_Assignment == False
-               
-                    
+                    valid_Assignment == False                    
 
         #Check valid_Assignment (all constraints except if the cage is not full assign true) -------------------------------------------------------------------------
         if(valid_Assignment == True):
@@ -357,13 +359,6 @@ def CSP_BACKTRACKING(Assignment, square_domains):
                 #if no failure happens return result else look for another value v in squared domain
                 if result !=  'failure':
                     return result
-    
-    #here we say there is no need to call failure if the op ='' as it is only one value and this value of least possible constrain and it is achieved
-    while   continue_flag == '' :
-                    result = CSP_BACKTRACKING(Assignment, square_domains)
-                    print('continue flag' ,continue_flag)
-                    if(result != 'failure') :
-                        return result
 
     #the failure indicate termination of this process so we have to get back to the root of recursion and try different values
     print('failure')
