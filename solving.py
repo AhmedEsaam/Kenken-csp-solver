@@ -2,6 +2,7 @@ from asyncio.windows_events import NULL
 import queue
 import random
 from xmlrpc.client import INVALID_XMLRPC
+import copy
 
 global GAMESIZE, CAGES, CONSTRAINTS, technique #,square_domains
 global row , col
@@ -37,11 +38,11 @@ def forward_checking( domains, x , v, op, constraint_value, idx_, cell_idx_, res
     global GAMESIZE, CAGES
     global evaluate
 
+    #this is for certain process where there is x , + 
+    #it tries to find out if the remaining is only one value so that we can calculate the next domain which will be only one value
     if(res==-1):
         return domains
 
-    #this is for certain process where there is x , + 
-    #it tries to find out if the remaining is only one value so that we can calculate the next domain which will be only one value
     c=cell_idx_
     if(len(c)) :
         c1=cell_idx_[0]-1
@@ -68,6 +69,8 @@ def forward_checking( domains, x , v, op, constraint_value, idx_, cell_idx_, res
 
         #only accept the other cells (not the current one) .
         if ((row != row_next) or (col != col_next)) :
+            print('row : ' , row)
+            print('col : ' , col)
             if (op == '-'):
                 next_domain = []
 
@@ -81,7 +84,7 @@ def forward_checking( domains, x , v, op, constraint_value, idx_, cell_idx_, res
                 elif (v - cnst_v < 0):
                     if ((v + cnst_v) in domains[row_next][col_next]) :
                         next_domain = [v + cnst_v]
-                domains[row_next][col_next] = next_domain
+                domains[row_next][col_next] = copy.deepcopy(next_domain)
 
             elif (op == '÷'):
                 next_domain = []
@@ -91,7 +94,7 @@ def forward_checking( domains, x , v, op, constraint_value, idx_, cell_idx_, res
                     next_domain.append(int(v / cnst_v))
                 if ((v * cnst_v) in domains[row_next][col_next]) :
                     next_domain.append(v * cnst_v)
-                domains[row_next][col_next] = next_domain
+                domains[row_next][col_next] = copy.deepcopy(next_domain)
 
             #we needed it at the begining but now this is trivial but just we use it for readability purpose
             if res > 0 : 
@@ -107,14 +110,14 @@ def forward_checking( domains, x , v, op, constraint_value, idx_, cell_idx_, res
                     
                     #else , add all possible values
                     else :
-                        next_domain_ = next_domain.copy()
+                        next_domain_ = copy.deepcopy(next_domain)
                         for d in next_domain_:
                             if (d > (cnst_v / res)):
                                     next_domain.remove(d)
                             elif ( ((cnst_v / res)% d) != 0) and (d != 1) :
                                     next_domain.remove(d)
                                 
-                    domains[row_next][col_next] = next_domain
+                    domains[row_next][col_next] = copy.deepcopy(next_domain)
 
 
                 if (op == '+'):
@@ -129,11 +132,11 @@ def forward_checking( domains, x , v, op, constraint_value, idx_, cell_idx_, res
 
                     #else , add all possible values
                     else:
-                        next_domain_ = next_domain.copy()
+                        next_domain_ = copy.deepcopy(next_domain)
                         for d in next_domain_:
                             if (d > (cnst_v - res)):
                                 next_domain.remove(d)
-                    domains[row_next][col_next] = next_domain
+                    domains[row_next][col_next] = copy.deepcopy(next_domain)
     return domains  
 
 def REMOVE_INCONSISTENT_VALUES(xi,xj,domains):
@@ -225,22 +228,20 @@ def CSP_BACKTRACKING(Assignment, square_domains):
     random.shuffle(square_domains[row][col])
 
     #domain_before store the domain before being changed
-    domain_before = square_domains.copy()
-    current_Assignment = Assignment.copy()
-    # row_before= row
-    # col_before= col
+    cell_index_before = cell_index
+    row_before= row
+    col_before= col
+    square_domains_before=copy.deepcopy(square_domains)
     for v in square_domains[row][col] :
-        print(Assignment)
         print(evaluate)
         #evaluate according to number of values being tried
         evaluate+=1
 
         #restore the original domain before it has been changed (at this value).
         #Note : the domain is not completely reseted it is just restored to what it was at this variable.
-        square_domains = domain_before.copy()
-        Assignment=current_Assignment.copy()
-        # row= row_before
-        # col= col_before
+        row= row_before
+        col= col_before
+        cell_index = cell_index_before
 
         #assign random value v from the domain
         Assignment[row][col] = v
@@ -306,7 +307,6 @@ def CSP_BACKTRACKING(Assignment, square_domains):
                     valid_Assignment = False
 
             #Optional if you need Forward Checking :
-            
             if (technique=="FC" and valid_Assignment == True):
                 
                 #this is a condition made so that the value of result is not bigger than the cage
@@ -333,8 +333,9 @@ def CSP_BACKTRACKING(Assignment, square_domains):
                 br =0
                 for i in range(GAMESIZE) : 
                     for j in range (GAMESIZE) :
-                        if (len(domains[i][j]) == 0) and (Assignment[i][j] == 0) :
+                        if (len(domains[i][j]) == 0) and (Assignment[i][j] == 0 ) :
                             valid_Assignment == False
+
                             br=1
                             break
                     if(br==1):
@@ -356,10 +357,17 @@ def CSP_BACKTRACKING(Assignment, square_domains):
 
                 #make the same process for the next variable
                 result = CSP_BACKTRACKING(Assignment, square_domains)
+                
 
                 #if no failure happens return result else look for another value v in squared domain
                 if result !=  'failure':
                     return result
+
+        Assignment[row][col] = 0
+        square_domains=copy.deepcopy(square_domains_before)
+        
+    square_domains=copy.deepcopy(square_domains_before)
+    Assignment[row_before][col_before] = 0
     #the failure indicate termination of this process so we have to get back to the root of recursion and try different values
     print('failure')
     return 'failure'
