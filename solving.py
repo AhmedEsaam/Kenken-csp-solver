@@ -69,8 +69,6 @@ def forward_checking( domains, x , v, op, constraint_value, idx_, cell_idx_, res
 
         #only accept the other cells (not the current one) .
         if ((row != row_next) or (col != col_next)) :
-            print('row : ' , row)
-            print('col : ' , col)
             if (op == '-'):
                 next_domain = []
 
@@ -224,7 +222,7 @@ def CSP_BACKTRACKING(Assignment, square_domains):
         return Assignment
     #########################
     #assign value from square domains
-    print('\n')
+    # print('\n')
     random.shuffle(square_domains[row][col])
 
     #domain_before store the domain before being changed
@@ -233,7 +231,7 @@ def CSP_BACKTRACKING(Assignment, square_domains):
     col_before= col
     square_domains_before=copy.deepcopy(square_domains)
     for v in square_domains[row][col] :
-        print(evaluate)
+        # print(evaluate)
         #evaluate according to number of values being tried
         evaluate+=1
 
@@ -369,7 +367,7 @@ def CSP_BACKTRACKING(Assignment, square_domains):
     square_domains=copy.deepcopy(square_domains_before)
     Assignment[row_before][col_before] = 0
     #the failure indicate termination of this process so we have to get back to the root of recursion and try different values
-    print('failure')
+    # print('failure')
     return 'failure'
 
 def solveGame(GAMESIZE_, CAGES_, CONSTRAINTS_, technique_): # TO BE CHANGED TO A CSP SOLVER
