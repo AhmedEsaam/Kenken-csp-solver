@@ -1,4 +1,9 @@
+from asyncio.windows_events import NULL
+from audioop import reverse
+import queue
 import random
+from xmlrpc.client import INVALID_XMLRPC
+import copy
 
 global GAMESIZE, CAGES, CONSTRAINTS, technique #,square_domains
 global row , col
@@ -31,17 +36,17 @@ global evaluate
         'FC' : Backtracking with forward checking
         'AC' : Backtracking with forward checking and arc consistency
     
-'''
+    '''
 
 def forward_checking( domains, x , v, op, constraint_value, idx_, cell_idx_, res , cage_vals, Assignment):
     global GAMESIZE, CAGES
     global evaluate
 
+    #this is for certain process where there is x , + 
+    #it tries to find out if the remaining is only one value so that we can calculate the next domain which will be only one value
     if(res==-1):
         return domains
 
-    #this is for certain process where there is x , + 
-    #it tries to find out if the remaining is only one value so that we can calculate the next domain which will be only one value
     c=cell_idx_
     if(len(c)) :
         c1=cell_idx_[0]-1
@@ -52,10 +57,10 @@ def forward_checking( domains, x , v, op, constraint_value, idx_, cell_idx_, res
     col = x[1]
     for i in range(GAMESIZE) : 
         if (i != col) :
-            if v in domains[row][i] :
+            if ((v in domains[row][i]) and (Assignment[row][i] == 0)):
                domains[row][i].remove(v) 
         if (i != row) :
-            if v in domains[i][col] : 
+            if ((v in domains[i][col]) and (Assignment[i][col] == 0)): 
                domains[i][col].remove(v)
 
     # change domains of cells in same cage
@@ -67,33 +72,39 @@ def forward_checking( domains, x , v, op, constraint_value, idx_, cell_idx_, res
         col_next = cell[1]-1
 
         #only accept the other cells (not the current one) .
-        if ((row != row_next) or (col != col_next)) :
+        if (((row != row_next) or (col != col_next)) and (Assignment[row_next][col_next] == 0)) :
+            domain_modified = 0
             if (op == '-'):
                 next_domain = []
-
                 #initially there is no domain , then we append the value that can be used in any order to get the constraint value
                 if (v - cnst_v > 0):
                     if ((v - cnst_v) in domains[row_next][col_next]) :
                         next_domain.append(v - cnst_v)
+                        domain_modified = 1
                     if ((v + cnst_v) in domains[row_next][col_next]) :
                         next_domain.append(v + cnst_v)
+                        domain_modified = 1
 
                 elif (v - cnst_v < 0):
                     if ((v + cnst_v) in domains[row_next][col_next]) :
                         next_domain = [v + cnst_v]
-                domains[row_next][col_next] = next_domain
+                        domain_modified = 1
+                if domain_modified :
+                    domains[row_next][col_next] = copy.deepcopy(next_domain)
 
             elif (op == '÷'):
                 next_domain = []
-
                 #initially there is no domain , then we append the value that can be used in any order to get the constraint value
                 if (int(v / cnst_v) in domains[row_next][col_next]) :
                     next_domain.append(int(v / cnst_v))
+                    domain_modified = 1
                 if ((v * cnst_v) in domains[row_next][col_next]) :
                     next_domain.append(v * cnst_v)
-                domains[row_next][col_next] = next_domain
+                    domain_modified = 1
+                if domain_modified :
+                    domains[row_next][col_next] = copy.deepcopy(next_domain)
 
-            #we needed it at the begining but now this is trivial but just we use it for readability purpose 
+            #we needed it at the begining but now this is trivial but just we use it for readability purpose
             if res > 0 : 
                 if (op == 'x'):
                     next_domain = domains[row_next][col_next]
@@ -102,18 +113,24 @@ def forward_checking( domains, x , v, op, constraint_value, idx_, cell_idx_, res
                         if(row_next == c1 and col_next == c2):
                             if( (int(cnst_v/res) in next_domain)) :
                                 next_domain = [int(cnst_v/res)]
+                                domain_modified = 1
                             else :
                                 next_domain = []
+                                domain_modified = 1
                     
                     #else , add all possible values
                     else :
-                        for d in next_domain:
+                        next_domain_ = copy.deepcopy(next_domain)
+                        for d in next_domain_:
                             if (d > (cnst_v / res)):
                                     next_domain.remove(d)
+                                    domain_modified = 1
                             elif ( ((cnst_v / res)% d) != 0) and (d != 1) :
                                     next_domain.remove(d)
+                                    domain_modified = 1
                                 
-                    domains[row_next][col_next] = next_domain
+                    if domain_modified :
+                        domains[row_next][col_next] = copy.deepcopy(next_domain)
 
 
                 if (op == '+'):
@@ -123,18 +140,23 @@ def forward_checking( domains, x , v, op, constraint_value, idx_, cell_idx_, res
                         if(row_next == c1 and col_next == c2):
                             if( (cnst_v-res) in next_domain ) :
                                 next_domain = [cnst_v-res]
+                                domain_modified = 1
                             else :
                                 next_domain = []
+                                domain_modified = 1
 
                     #else , add all possible values
                     else:
-                        for d in next_domain:
+                        next_domain_ = copy.deepcopy(next_domain)
+                        for d in next_domain_:
                             if (d > (cnst_v - res)):
                                 next_domain.remove(d)
-                    domains[row_next][col_next] = next_domain
+                                domain_modified = 1
+                    if domain_modified :
+                        domains[row_next][col_next] = copy.deepcopy(next_domain)
     return domains  
 
-def REMOVE_INCONSISTENT_VALUES(xi,xj,domains):
+def REMOVE_INCONSISTENT_VALUES(xi, xj, domains):
     removed=False
     xi_r=xi[0]-1
     xi_c=xi[1]-1
@@ -143,7 +165,7 @@ def REMOVE_INCONSISTENT_VALUES(xi,xj,domains):
     op=''
     constraint_value=0
     same_2_sized_cage=0
-    for idx,cage in enumerate(CAGES) :
+    for idx, cage in enumerate(CAGES) :
         if([xi_r+1,xi_c+1] in cage) and ([xj_r+1,xj_c+1] in cage) and len(cage)==2  :
             op=CONSTRAINTS[idx]['op']
             constraint_value=CONSTRAINTS[idx]['constraint_value']
@@ -152,8 +174,10 @@ def REMOVE_INCONSISTENT_VALUES(xi,xj,domains):
     satisfied=0
     for v in domains[xi_r][xi_c]:
         for u in domains[xj_r][xj_c]:
-            if u !=v:
+            # check if no value in Xj equals this value in Xi
+            if u != v:
                 satisfied=1
+            # check if no value in Xj satisfis the 2-sized cage constraint with this value in Xi
             if same_2_sized_cage==1:
                 if op=='+':
                     if u+v==constraint_value:
@@ -219,21 +243,28 @@ def CSP_BACKTRACKING(Assignment, square_domains):
         return Assignment
     #########################
     #assign value from square domains
+    # print('\n')
     random.shuffle(square_domains[row][col])
 
     #domain_before store the domain before being changed
-    domain_before = square_domains.copy()
-
+    cell_index_before = cell_index
+    row_before= row
+    col_before= col
+    square_domains_before=copy.deepcopy(square_domains)
     for v in square_domains[row][col] :
+        # print(evaluate)
         #evaluate according to number of values being tried
         evaluate+=1
 
         #restore the original domain before it has been changed (at this value).
-        #Note : the domain is not completely reseted it just restored to what it was at this variable.
-        square_domains = domain_before.copy()
+        #Note : the domain is not completely reseted it is just restored to what it was at this variable.
+        row= row_before
+        col= col_before
+        cell_index = cell_index_before
 
         #assign random value v from the domain
         Assignment[row][col] = v
+        # print('\n', Assignment)
         
         #initialize the valid_Assignment to true (until the opposite is proved)
         valid_Assignment = True
@@ -245,7 +276,6 @@ def CSP_BACKTRACKING(Assignment, square_domains):
                 valid_Assignment = False
             if( (Assignment[i][col]==Assignment[row][col]) and (i != row) ):
                 valid_Assignment = False
-
         #validate over the cage constraint -------------------------------------------------------------------------------------
         if(valid_Assignment == True):
             flag=0
@@ -297,9 +327,7 @@ def CSP_BACKTRACKING(Assignment, square_domains):
                     valid_Assignment = False
 
             #Optional if you need Forward Checking :
-            
             if (technique=="FC" and valid_Assignment == True):
-                
                 #this is a condition made so that the value of result is not bigger than the cage
                 if(op == '+') :
                     res=0
@@ -311,7 +339,7 @@ def CSP_BACKTRACKING(Assignment, square_domains):
                     res=1
                     for item in cage_vals:
                         res = res * item
-                    if( res > constraint_value):
+                    if( (res > constraint_value) or (constraint_value % res != 0)):
                         valid_Assignment=False
                         res =-1
 
@@ -324,8 +352,8 @@ def CSP_BACKTRACKING(Assignment, square_domains):
                 br =0
                 for i in range(GAMESIZE) : 
                     for j in range (GAMESIZE) :
-                        if (len(domains[i][j]) == 0) and (Assignment[i][j] == 0) :
-                            valid_Assignment == False
+                        if (len(domains[i][j]) == 0) and (Assignment[i][j] == 0 ) :
+                            valid_Assignment = False
                             br=1
                             break
                     if(br==1):
@@ -335,27 +363,57 @@ def CSP_BACKTRACKING(Assignment, square_domains):
                 x = [row,col]
                 consistency,square_domains = arc_consistency(square_domains, x , v, op, constraint_value, idx_, cell_idx_, res, Assignment)
                 if not consistency:
-                    valid_Assignment == False
-               
-                    
+                    valid_Assignment == False                    
 
         #Check valid_Assignment (all constraints except if the cage is not full assign true) -------------------------------------------------------------------------
         if(valid_Assignment == True):
-                #call next index (according to least constraint heurstic)
+                # print(square_domains)
+                #call next index (according to most constraining heuristic)
                 if(cell_index < (size*size)-1):
                     cell_index += 1
                     row =cages_h[cell_index][0]-1
                     col =cages_h[cell_index][1]-1 
 
+                # choose cell with minimum domain in the cage
+                for cage in (CAGES) :
+                    if([row+1 ,col+1] in cage) :
+                        least_domains_cell = []
+                        for cell in cage:
+                            r_ = cell[0]-1
+                            c_ = cell[1]-1
+                            domain = square_domains[r_][c_]
+                            if ((len(domain) < len(least_domains_cell)) or (len(least_domains_cell) == 0))\
+                                and Assignment[r_][c_] == 0:
+                                least_domains_cell = domain
+                                row = r_
+                                col = c_
+                        for ind, cel in enumerate(cages_h):
+                            if ([row+1, col+1] == cel) and (ind != cell_index):
+                                cages_h[ind] = cages_h[cell_index]
+                                cages_h[cell_index] = [row+1, col+1]
+                                # print('swapped')
+                                break
+                        break
+
+
                 #make the same process for the next variable
                 result = CSP_BACKTRACKING(Assignment, square_domains)
+                
 
                 #if no failure happens return result else look for another value v in squared domain
                 if result !=  'failure':
                     return result
+
+        Assignment[row][col] = 0
+        square_domains=copy.deepcopy(square_domains_before)
+
+        
+    square_domains=copy.deepcopy(square_domains_before)
+    Assignment[row_before][col_before] = 0
     #the failure indicate termination of this process so we have to get back to the root of recursion and try different values
     # print('failure')
     return 'failure'
+
 
 def solveGame(GAMESIZE_, CAGES_, CONSTRAINTS_, technique_): # TO BE CHANGED TO A CSP SOLVER
     global GAMESIZE, CAGES, CONSTRAINTS, technique#, square_domains
@@ -386,6 +444,8 @@ def solveGame(GAMESIZE_, CAGES_, CONSTRAINTS_, technique_): # TO BE CHANGED TO A
         
     evaluate=0
     Possibilities=(GAMESIZE)**(GAMESIZE**2) #Possibilities of all boards
+
+    # Get row and col neighbours of every cell
     neighbors =[[[] for j in range(cols)] for k in range(size)]
     for r in range(GAMESIZE):
         for c in range(GAMESIZE):
@@ -393,31 +453,44 @@ def solveGame(GAMESIZE_, CAGES_, CONSTRAINTS_, technique_): # TO BE CHANGED TO A
                 if (n!=c) and (n!=r):
                     neighbors[r][c].append([r+1,n+1])
                     neighbors[r][c].append([n+1,c+1])
+
     while(True) :
         #initialize the domain
         square_domains = [[[i+1 for i in range(rows)] for j in range(cols)] for k in range(size)]
+
+        Assignment = [[0 for i in range(size)] for j in range(rows)]
 
         #improvement on the domain if it founds a cage of 1 value then the domain is only this specific value
         for idx, cage in enumerate(CAGES):
             if CONSTRAINTS[idx]['op'] == ' ':
                 row__ =  CONSTRAINTS[idx]['topleft'][0] -1
                 col__ =  CONSTRAINTS[idx]['topleft'][1] -1
-                square_domains[row__][col__] = [CONSTRAINTS[idx]['constraint_value']]
+                v = [CONSTRAINTS[idx]['constraint_value']]
+                square_domains[row__][col__] = v
+                Assignment[row__][col__] = v[0]
 
-        Assignment = [[0 for i in range(size)] for j in range(rows)]
+                for i in range(GAMESIZE) : 
+                    if (i != col__) :
+                        if ((v in square_domains[row__][i]) and (Assignment[row__][i] == 0)):
+                            square_domains[row__][i].remove(v) 
+                    if (i != row__) :
+                        if ((v in square_domains[i][col__]) and (Assignment[i][col__] == 0)): 
+                            square_domains[i][col__].remove(v)
+
         cell_index=0
         row =cages_h[cell_index][0]-1
         col =cages_h[cell_index][1]-1
         csp_BT = CSP_BACKTRACKING(Assignment, square_domains)
 
         #(GAMESIZE)**(GAMESIZE**2) * GAMESIZE**2 this equation indicates all possible number of values can be assigned if it excceds the limit
-        Possibilities = 50000
         if(evaluate >= Possibilities) :
             print('couldn\'t find value ')
             break
         #if there is failure then repeat the loop else break and output the value
         if(csp_BT != 'failure') :
-            break 
+            break
+        else:
+            print('failure')
     print(evaluate)
     num_assignments = evaluate
     return csp_BT, num_assignments
@@ -425,10 +498,13 @@ def solveGame(GAMESIZE_, CAGES_, CONSTRAINTS_, technique_): # TO BE CHANGED TO A
  
 
 
+           
 ''' 3*3 test example 
-Assignment, _ =  solveGame(3, [[[3, 1], [3, 2]], [[2, 3], [2, 2]], [[2, 1], [1, 1], [1, 2], [1, 3]], [[3, 3]]] , [{'topleft': [3, 1], 'op': 'x', 'constraint_value': 3}, {'topleft': [2, 2], 'op': 'x', 'constraint_value': 6}, {'topleft': [1, 1], 'op': 'x', 'constraint_value': 6}, {'topleft': [3, 3], 'op': ' ', 'constraint_value': 2}], 0)                 
+Assignment, _ =  solveGame(3, [[[3, 2], [3, 3], [2, 3]], [[1, 2], [1, 3]], [[2, 1], [2, 2]], [[3, 1]], [[1, 1]]]\
+     , [{'topleft': [2, 3], 'op': 'x', 'constraint_value': 4}, {'topleft': [1, 2], 'op': 'x', 'constraint_value': 3}, {'topleft': [2, 1], 'op': '÷', 'constraint_value': 3}, {'topleft': [3, 1], 'op': ' ', 'constraint_value': 3}, {'topleft': [1, 1], 'op': ' ', 'constraint_value': 2}]\
+     , 'FC')                 
 print('Assignment : ' ,Assignment)  
-#''' 
+#'''
 
 ''' 4*4 test example
 Assignment, _ =  solveGame(4, [[[3, 2], [3, 3], [3, 4], [4, 4]], [[1, 4], [1, 3]], [[2, 2], [2, 3], [2, 4]], [[3, 1], [4, 1], [4, 2], [4, 3]], [[1, 1], [1, 2]], [[2, 1]]] \
@@ -436,11 +512,3 @@ Assignment, _ =  solveGame(4, [[[3, 2], [3, 3], [3, 4], [4, 4]], [[1, 4], [1, 3]
     ,'FC')                 
 print('Assignment : ' ,Assignment)   
 #'''
-
-# ''' 5*5 test example
-Assignment, _ =  solveGame(5, [[[3, 3], [3, 4], [3, 5]], [[2, 3], [2, 4], [2, 5], [1, 5]], [[1, 1], [1, 2], [1, 3]], [[4, 5], [4, 4], [4, 3], [4, 2]], [[2, 1], [2, 2], [3, 2], [3, 1]], [[4, 1], [5, 1]], [[1, 4]], [[5, 2], [5, 3]], [[5, 4], [5, 5]]] \
-    ,[{'topleft': [3, 3], 'op': '+', 'constraint_value': 9}, {'topleft': [1, 5], 'op': '+', 'constraint_value': 12}, {'topleft': [1, 1], 'op': 'x', 'constraint_value': 15}, {'topleft': [4, 2], 'op': '+', 'constraint_value': 13}, {'topleft': [2, 1], 'op': 'x', 'constraint_value': 32}, {'topleft': [4, 1], 'op': '+', 'constraint_value': 7}, {'topleft': [1, 4], 'op': ' ', 'constraint_value': 4}, {'topleft': [5, 2], 'op': '÷', 'constraint_value': 4}, {'topleft': [5, 4], 'op': '-', 'constraint_value': 1}]\
-    ,'FC')                 
-print('Assignment : ' ,Assignment)   
-#'''
-
