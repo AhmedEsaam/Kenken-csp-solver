@@ -58,7 +58,7 @@ def main():
     global DISPLAYSURF, BASICFONT, SECFONT, SECFONT2, SECFONT3, FONT, RESET_SURF, RESET_RECT, NEW_SURF, NEW_RECT, SOLVE_SURF, SOLVE_RECT, SIZE_SURF, SIZE_RECT, SOL_SURF, SOL_RECT, GAMESIZE
     global GAME, CAGES, CONSTRAINTS
     pygame.init()
-    GAMESIZE = 7  # n*n
+    GAMESIZE = 5  # n*n
     WINDOWWIDTH = GAMESIZE * TILESIZE + 250
     WINDOWHEIGHT = GAMESIZE * TILESIZE + 200
     DISPLAYSURF = pygame.display.set_mode((WINDOWWIDTH, WINDOWHEIGHT))
@@ -255,7 +255,7 @@ def eventHandler():
                 # Solve game
                # solved = GAME  # comment
             
-                solved, a_ = solveGame(GAMESIZE, CAGES, CONSTRAINTS, 'FC')
+                solved, a_ = solveGame(GAMESIZE, CAGES, CONSTRAINTS, technique_ ='FC', heuristic_ = 'MCV')
                 GAMEDISPLAYED = solved
                 print(solved)
                 pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND)

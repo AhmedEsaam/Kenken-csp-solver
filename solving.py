@@ -415,7 +415,7 @@ def CSP_BACKTRACKING(Assignment, square_domains):
     return 'failure'
 
 
-def solveGame(GAMESIZE_, CAGES_, CONSTRAINTS_, technique_): # TO BE CHANGED TO A CSP SOLVER
+def solveGame(GAMESIZE_, CAGES_, CONSTRAINTS_, technique_, heuristic_): # TO BE CHANGED TO A CSP SOLVER
     global GAMESIZE, CAGES, CONSTRAINTS, technique#, square_domains
     global row , col
     global evaluate
@@ -435,7 +435,8 @@ def solveGame(GAMESIZE_, CAGES_, CONSTRAINTS_, technique_): # TO BE CHANGED TO A
     global neighbors
     cell_index=0
     cages_h=CAGES.copy()
-    cages_h.sort(key = len, reverse = True)
+    if heuristic_ == 'MCV': 
+        cages_h.sort(key = len, reverse = True)
     temp=[]
     for cage in cages_h :
         for cell in cage :
