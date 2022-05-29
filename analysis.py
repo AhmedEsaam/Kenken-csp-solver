@@ -8,7 +8,7 @@ writer = writer(file, dialect='excel')
 writer.writerow(["Technique", "Size", "Assignments", "time_elapsed"])
 
 techniques = ['BT', 'FC', 'AC']
-MAX_SIZE = 9
+MAX_SIZE = 5
 for technique in techniques:
     for n in range(1, MAX_SIZE):
         for i in range(4):
