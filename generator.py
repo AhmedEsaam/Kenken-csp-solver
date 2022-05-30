@@ -1,4 +1,5 @@
 # Import the pygame module
+from tokenize import group
 import pygame, sys
  
 # Import pygame.locals for easier access to key coordinates
@@ -19,7 +20,10 @@ BLANK = None
 BLACK =         (  0,   0,   0)
 WHITE =         (255, 255, 255)
 DARKGREY =      ( 55,  58,  64)
+GREY =          (115, 119, 123)
 OFFGREY =       (238, 238, 238)
+GREY1 =         (170, 170, 170)
+GREY2 =         (191, 191, 191)
 BRIGHTBLUE =    (  0,  50, 255)
 DARKTURQUOISE = (  3,  54,  73)
 BLUE =          (  0,  50, 255)
@@ -27,7 +31,6 @@ GREEN =         ( 92, 149,  92)
 YELLOW =        (255, 239, 130)
 DARKGREEN =     ( 47,  83,  59)
 DARKGREEN2 =    ( 68, 106,  70)
-RED =           (255,   0,   0)
 BROWN =         (232, 201, 126)
 OFFGREEN =      (157, 204, 145)
 OFFGREEN2 =     (177, 230, 147)
@@ -44,7 +47,9 @@ SECFONTSIZE = 14
 TEXT = OFFGREY
 
 BUTTONCOLOR = BLACK
-BUTTONHOVER = OFFGREEN
+BUTTONHOVER = GREY
+OPSEL = GREY1
+OPHOV = GREY2
 BUTTONTEXTCOLOR = BLACK
 MESSAGECOLOR = WHITE
 
@@ -57,8 +62,11 @@ YMARGIN = 80
 def main():
     global DISPLAYSURF, BASICFONT, SECFONT, SECFONT2, SECFONT3, FONT, RESET_SURF, RESET_RECT, NEW_SURF, NEW_RECT, SOLVE_SURF, SOLVE_RECT, SIZE_SURF, SIZE_RECT, SOL_SURF, SOL_RECT, GAMESIZE
     global GAME, CAGES, CONSTRAINTS
+    global TECHNIQUE, HEURISTIC
     pygame.init()
-    GAMESIZE = 5  # n*n
+    GAMESIZE = 4  # n*n
+    TECHNIQUE = 'BT'
+    HEURISTIC = 'MCV'
     WINDOWWIDTH = GAMESIZE * TILESIZE + 250
     WINDOWHEIGHT = GAMESIZE * TILESIZE + 200
     DISPLAYSURF = pygame.display.set_mode((WINDOWWIDTH, WINDOWHEIGHT))
@@ -111,16 +119,19 @@ def drawTile(tiley, tilex, game, constraint, color, adjx=0, adjy=0):
         constRect.center = left + int(constRect.width) -2 + adjx, top + 12 + adjy
         DISPLAYSURF.blit(constSurf, constRect)
 
+
 global GAMEDISPLAYED
 GAMEDISPLAYED = None
 
 def drawBoard(n, game, cages, constraints):
     global HOVERTILE, PRESSEDTILE, TILES, TILESPOS
-    global DISPLAYSURF, BASICFONT, SECFONT, SECFONT2, FONT, RESET_SURF, RESET_RECT, NEW_SURF, NEW_RECT, SOLVE_SURF, SOLVE_RECT, SIZE_SURF, SIZE_RECT, SOL_SURF, SOL_RECT, GAMESIZE
+    global DISPLAYSURF, BASICFONT, SECFONT, SECFONT2, FONT, sizes_group, sol_group, RESET_SURF, RESET_RECT, NEW_SURF, NEW_RECT, SOLVE_SURF, SOLVE_RECT, SIZE_SURF, SIZE_RECT, SOL_SURF, SOL_RECT, GAMESIZE
     DISPLAYSURF.fill(OFFGREEN)
     # if message:
     #     textSurf, textRect = makeText(message, MESSAGECOLOR, BGCOLOR, 5, 5)
     #     DISPLAYSURF.blit(textSurf, textRect)
+
+    # Draw tiles
     for tiley in range(n):
         for tilex in range(n):
             # constraint = {'topleft':[1,1], 'op':'+', 'constraint_value':3}
@@ -131,6 +142,7 @@ def drawBoard(n, game, cages, constraints):
                     if [tiley,tilex]==PRESSEDTILE: color = PRESSCOLOR
                     elif [tiley,tilex]==HOVERTILE: color = HOVERCOLOR
                     drawTile(tiley, tilex, game, constraint, color)
+    # Draw tiles' boarders
     for cage in cages:
         for tile in cage:
             tilex = tile[0]
@@ -147,19 +159,23 @@ def drawBoard(n, game, cages, constraints):
             if [tilex,tiley+1] not in cage :
                 pygame.draw.line(DISPLAYSURF, BORDERCOLOR, (left + TILESIZE, top + TILESIZE),  (left + TILESIZE , top), 3) #right
     
+    # Draw game controlers
     pygame.draw.rect(DISPLAYSURF, DARKGREY, (0, 97     , 127, 24))
     pygame.draw.rect(DISPLAYSURF, OFFGREY,  (0, 97+24  , 127, 96))
 
-    pygame.draw.rect(DISPLAYSURF, DARKGREY, (0, 137+80 , 127, 24))
-    pygame.draw.rect(DISPLAYSURF, OFFGREY,  (0, 137+80+24 , 127, 96))
+    pygame.draw.rect(DISPLAYSURF, DARKGREY, (0, 143+80 , 127, 24))
+    pygame.draw.rect(DISPLAYSURF, OFFGREY,  (0, 143+80+24 , 127, 96))
 
-    pygame.draw.rect(DISPLAYSURF, DARKGREY, (0, 177+160, 127, 24))
+    pygame.draw.rect(DISPLAYSURF, DARKGREY, (0, 183+160, 127, 24))
 
-    DISPLAYSURF.blit(RESET_SURF, RESET_RECT)
     DISPLAYSURF.blit(NEW_SURF, NEW_RECT)
     DISPLAYSURF.blit(SOLVE_SURF, SOLVE_RECT)
-    for x in range(4): DISPLAYSURF.blit(SIZE_SURF[x], SIZE_RECT[x])
-    for x in range(3): DISPLAYSURF.blit(SOL_SURF[x], SOL_RECT[x])    
+    DISPLAYSURF.blit(RESET_SURF, RESET_RECT)
+    for x in range(4): 
+        sizes_group.buttons[x].draw()
+    for x in range(3):
+        sol_group.buttons[x].draw()
+    pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_ARROW)
     pygame.display.update()
 
 
@@ -173,35 +189,36 @@ def makeText(text, color, font, top, left):
     return (textSurf, textRect)
 
 def drawGameOptions():
-    global DISPLAYSURF, BASICFONT, SECFONT, SECFONT2, FONT, RESET_SURF, RESET_RECT, NEW_SURF, NEW_RECT, SOLVE_SURF, SOLVE_RECT, SIZE_SURF, SIZE_RECT, SOL_SURF, SOL_RECT, GAMESIZE
+    global DISPLAYSURF, BASICFONT, SECFONT, SECFONT2, FONT, sizes_group, sol_group, RESET_SURF, RESET_RECT, NEW_SURF, NEW_RECT, SOLVE_SURF, SOLVE_RECT, SIZE_SURF, SIZE_RECT, SOL_SURF, SOL_RECT, GAMESIZE
     # Store the option buttons and their rectangles in OPTIONS.
     NEW_SURF,   NEW_RECT   = makeText('  New Game ',       TEXT, FONT, 0, 100)
-    SOLVE_SURF, SOLVE_RECT = makeText('  Solve         ',  TEXT, FONT, 0, 140+80)
-    RESET_SURF, RESET_RECT = makeText('  Reset         ',  TEXT, FONT, 0, 180+160)
-
-    group = buttonGroup(127, SECFONT2)
+    SOLVE_SURF, SOLVE_RECT = makeText('  Solve         ',  TEXT, FONT, 0, 146+80)
+    RESET_SURF, RESET_RECT = makeText('  Reset         ',  TEXT, FONT, 0, 186+160)
+    
+    # Board sizes options 
+    sizes_group = buttonGroup(127, SECFONT2)
     SIZE_SURF = []
     SIZE_RECT = []
     for x in range(4):
-        group.buttons.append(button(group, str(x+3)+' x '+str(x+3)))
-        s_surf, s_rect = group.buttons[x].draw()
+        sizes_group.buttons.append(button(sizes_group, str(x+3)+' x '+str(x+3)))
+        s_surf, s_rect = sizes_group.buttons[x].draw()
         SIZE_SURF.append(s_surf)
         SIZE_RECT.append(s_rect)
 
-    group = buttonGroup(250, SECFONT3)
+    # Solving Techniques options
+    sol_group = buttonGroup(257, SECFONT3)
     SOL_SURF = []
     SOL_RECT = []
     sol_techniques=[]
-    sol_techniques.append('Backtracking')
-    sol_techniques.append('BT w/ Forward Ch.')
-    sol_techniques.append('BT w/ FC & Arc Cons.') 
+    sol_techniques.append('Backtracking               ')
+    sol_techniques.append('BT w/ Forward Check.')
+    sol_techniques.append('BT w/ Arc Consist.      ') 
     for x in range(3):
-        group.buttons.append(button(group, sol_techniques[x]))
-        s_surf, s_rect = group.buttons[x].draw()
+        sol_group.buttons.append(button(sol_group, sol_techniques[x]))
+        s_surf, s_rect = sol_group.buttons[x].draw()
         SOL_SURF.append(s_surf)
         SOL_RECT.append(s_rect)
 
-        
 class buttonGroup():
     def __init__(self, start_pos, font):
         self.buttons = []
@@ -210,34 +227,59 @@ class buttonGroup():
 
 class button():
     # global SIZE_SURF, SIZE_RECT
-    def __init__(self,parent,text):
+    def __init__(self, parent, text):
         self.parent = parent
         self.text = text
         self.selected = False
+        self.s_surf, self.s_rect = makeText(self.text, DARKGREY, self.parent.font, 5, self.parent.start_pos)
+        self.pos = self.parent.start_pos
+        self.parent.start_pos += 24
+        self.draw()
 
     def select(self):
         for x in self.parent.buttons: x.selected = False
         self.selected = True
+        self.draw()
 
     def draw(self):
-        SIZE_SURF, SIZE_RECT = makeText(self.text, DARKGREY, self.parent.font, 5, self.parent.start_pos)
-        self.parent.start_pos += 22
-        return (SIZE_SURF, SIZE_RECT)
-        if self.selected: ...
-        else: ...
+        if self.selected:
+            pygame.draw.rect(DISPLAYSURF, OPSEL, (0, self.pos , 127, 24))
+            DISPLAYSURF.blit(self.s_surf, self.s_rect )    
+            pygame.display.update()
+        else:
+            pygame.draw.rect(DISPLAYSURF, OFFGREY, (0, self.pos , 127, 24))
+            DISPLAYSURF.blit(self.s_surf, self.s_rect )    
+            pygame.display.update()
+            ...
+
+        DISPLAYSURF.blit(self.s_surf, self.s_rect)
+        return (self.s_surf, self.s_rect)
+    
+    def hover(self):
+        pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND) 
+        for x in range(len(sol_group.buttons)):
+            sol_group.buttons[x].draw()
+        pygame.draw.rect(DISPLAYSURF, OPHOV, (0, self.pos , 127, 24))
+        for x in range(len(sol_group.buttons)):
+            DISPLAYSURF.blit(sol_group.buttons[x].s_surf, sol_group.buttons[x].s_rect)
+        pygame.display.update()
+
+    
         
+# Event Handler__________________________________________________________
 
 global val
 val = -1
 def eventHandler():
     global GAME, CAGES, CONSTRAINTS, HOVERTILE, PRESSEDTILE, TILES, TILESPOS, GAMEDISPLAYED
-    global GAMEDISPLAYED, val, PRESSEDTILE
+    global GAMEDISPLAYED, val, PRESSEDTILE, sizes_group, sol_group 
+    global TECHNIQUE, HEURISTIC
     val = -1
     for event in pygame.event.get():
         ## get position of cursor
         pos = pygame.mouse.get_pos()
 
-        # Handle mouse press events
+        # Handle mouse press events__________________________________________
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
             ## check if cursor is on tile ##
             PRESSEDTILE = []
@@ -245,20 +287,50 @@ def eventHandler():
                 for i in range(len(TILES)):
                     if TILES[i].collidepoint(pos):
                         PRESSEDTILE = TILESPOS[i]
+
             ## check if cursor is on button ##
+            #_____New Game and sizes
             if NEW_RECT.collidepoint(pos):
                 # New game
                 GAME, CAGES, CONSTRAINTS = generateNewGame(GAMESIZE)
                 GAMEDISPLAYED = None
                 pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND)
+
+            #_____Solve and techniques
+            # Solve game
             elif SOLVE_RECT.collidepoint(pos):
-                # Solve game
-               # solved = GAME  # comment
-            
-                solved, a_ = solveGame(GAMESIZE, CAGES, CONSTRAINTS, technique_ ='FC', heuristic_ = 'MCV')
+                # solved = GAME  # comment
+                solved, a_ = solveGame(GAMESIZE, CAGES, CONSTRAINTS, TECHNIQUE, HEURISTIC)
+                GAMEDISPLAYED = solved
+                print(solved)
+                print(TECHNIQUE, ' ', HEURISTIC)
+                pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND)
+            # Backtracking
+            elif SOL_RECT[0].collidepoint(pos):
+                sol_group.buttons[0].select()
+                TECHNIQUE = 'BT'
+                solved, a_ = solveGame(GAMESIZE, CAGES, CONSTRAINTS, TECHNIQUE, HEURISTIC)
                 GAMEDISPLAYED = solved
                 print(solved)
                 pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND)
+            # BT with Forward Checking 
+            elif SOL_RECT[1].collidepoint(pos):
+                sol_group.buttons[1].select()
+                TECHNIQUE = 'FC'
+                solved, a_ = solveGame(GAMESIZE, CAGES, CONSTRAINTS, TECHNIQUE, HEURISTIC)
+                GAMEDISPLAYED = solved
+                print(solved)
+                pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND)
+            # BT with Arc Consistency
+            elif SOL_RECT[2].collidepoint(pos):
+                sol_group.buttons[2].select()
+                TECHNIQUE = 'AC'
+                solved, a_ = solveGame(GAMESIZE, CAGES, CONSTRAINTS, TECHNIQUE, HEURISTIC)
+                GAMEDISPLAYED = solved
+                print(solved)
+                pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND)
+
+            #_____Reset
             elif RESET_RECT.collidepoint(pos):
                 # Reset game
                 GAMEDISPLAYED = None
@@ -266,8 +338,8 @@ def eventHandler():
 
             drawBoard(GAMESIZE, GAMEDISPLAYED, CAGES, CONSTRAINTS)
             
-        # Handle mouse hover events
-        elif event.type == pygame.MOUSEMOTION:
+        # Handle mouse hover events_______________________________________
+        elif ((event.type == pygame.MOUSEMOTION) or (event.type == pygame.MOUSEBUTTONUP)):
             ## check if cursor is on tile ##
             HOVERTILE = None
             if len(TILES) !=0:
@@ -276,14 +348,41 @@ def eventHandler():
                         HOVERTILE = TILESPOS[i]
             if HOVERTILE != None: drawBoard(GAMESIZE, GAMEDISPLAYED, CAGES, CONSTRAINTS)
             ## check if cursor is on button ##
-            if NEW_RECT.collidepoint(pos) or \
-                    SOLVE_RECT.collidepoint(pos) or \
-                    RESET_RECT.collidepoint(pos) :
+            if NEW_RECT.collidepoint(pos):
+                pygame.draw.rect(DISPLAYSURF, BUTTONHOVER, (0, 97     , 127, 24))
+                DISPLAYSURF.blit(NEW_SURF, NEW_RECT)
                 pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND)
-                return
-            else :pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_ARROW)
+            elif SOLVE_RECT.collidepoint(pos):
+                pygame.draw.rect(DISPLAYSURF, BUTTONHOVER , (0, 143+80 , 127, 24))
+                DISPLAYSURF.blit(SOLVE_SURF, SOLVE_RECT)
+                pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND)
+            elif RESET_RECT.collidepoint(pos):
+                pygame.draw.rect(DISPLAYSURF, BUTTONHOVER, (0, 183+160, 127, 24))
+                DISPLAYSURF.blit(RESET_SURF, RESET_RECT)   
+                pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND) 
+            elif SOL_RECT[0].collidepoint(pos):
+                sol_group.buttons[0].hover()
+            elif SOL_RECT[1].collidepoint(pos):
+                sol_group.buttons[1].hover()
+            elif SOL_RECT[2].collidepoint(pos):
+                sol_group.buttons[2].hover()
+                # return
+            else :
+                pygame.draw.rect(DISPLAYSURF, DARKGREY, (0, 97     , 127, 24))
+                pygame.draw.rect(DISPLAYSURF, DARKGREY , (0, 143+80 , 127, 24))
+                pygame.draw.rect(DISPLAYSURF, DARKGREY, (0, 183+160, 127, 24))
+                DISPLAYSURF.blit(NEW_SURF, NEW_RECT)
+                DISPLAYSURF.blit(SOLVE_SURF, SOLVE_RECT)
+                DISPLAYSURF.blit(RESET_SURF, RESET_RECT)
+                for x in range(4): 
+                    sizes_group.buttons[x].draw()
+                for x in range(3):
+                    sol_group.buttons[x].draw()
+                pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_ARROW)
 
-        # Key handler
+            pygame.display.update()
+
+        # Key handler______________________________________________________
         elif event.type == pygame.KEYUP:
             if event.key == K_ESCAPE:
                 pygame.quit()
@@ -319,12 +418,12 @@ def eventHandler():
                     drawBoard(GAMESIZE, GAMEDISPLAYED, CAGES, CONSTRAINTS)
             # pygame.event.post(event) # put the other KEYUP event objects back
 
-        # Check for quit
+        # Check for quit________________________________________
         elif event.type == pygame.QUIT:
             pygame.quit()
             sys.exit() # terminate if any QUIT events are present
 
-        # Inseting values
+        # Inseting values_______________________________________
         if val != -1 :
             if GAMEDISPLAYED == None:
                 GAMEDISPLAYED = []

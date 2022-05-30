@@ -412,6 +412,7 @@ def CSP_BACKTRACKING(Assignment, square_domains):
     Assignment[row_before][col_before] = 0
     #the failure indicate termination of this process so we have to get back to the root of recursion and try different values
     # print('failure')
+    
     return 'failure'
 
 
