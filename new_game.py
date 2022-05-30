@@ -22,8 +22,8 @@ def cagesCreator(GAMESIZE):
         cageSize = random.randint(2,4)
         if GAMESIZE > 5:
             rand_num = random.randint(1,100)
-            if rand_num < 25: cageSize = 1
-            elif rand_num < 70: cageSize = 2
+            if rand_num < 30: cageSize = 1
+            elif rand_num < 80: cageSize = 2
             # if rand_num < 55: cageSize = 2
             elif rand_num < 90: cageSize = 3
         

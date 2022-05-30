@@ -64,12 +64,13 @@ def main():
     global GAME, CAGES, CONSTRAINTS
     global TECHNIQUE, HEURISTIC
     pygame.init()
-    GAMESIZE = 4  # n*n
+    GAMESIZE = 3  # n*n
     TECHNIQUE = 'BT'
     HEURISTIC = 'MCV'
     WINDOWWIDTH = GAMESIZE * TILESIZE + 250
     WINDOWHEIGHT = GAMESIZE * TILESIZE + 200
-    DISPLAYSURF = pygame.display.set_mode((WINDOWWIDTH, WINDOWHEIGHT))
+ 
+    DISPLAYSURF = pygame.display.set_mode((WINDOWWIDTH, WINDOWHEIGHT), RESIZABLE)
     pygame.display.set_caption('Kenken Puzzle')
     BASICFONT = pygame.font.Font('freesansbold.ttf', BASICFONTSIZE)
     SECFONT = pygame.font.Font('freesansbold.ttf', SECFONTSIZE)
@@ -160,18 +161,18 @@ def drawBoard(n, game, cages, constraints):
                 pygame.draw.line(DISPLAYSURF, BORDERCOLOR, (left + TILESIZE, top + TILESIZE),  (left + TILESIZE , top), 3) #right
     
     # Draw game controlers
-    pygame.draw.rect(DISPLAYSURF, DARKGREY, (0, 97     , 127, 24))
-    pygame.draw.rect(DISPLAYSURF, OFFGREY,  (0, 97+24  , 127, 102))
+    pygame.draw.rect(DISPLAYSURF, DARKGREY, (0, 47     , 127, 24))
+    pygame.draw.rect(DISPLAYSURF, OFFGREY,  (0, 47+24  , 127, 172))
 
-    pygame.draw.rect(DISPLAYSURF, DARKGREY, (0, 143+80 , 127, 24))
-    pygame.draw.rect(DISPLAYSURF, OFFGREY,  (0, 143+80+24 , 127, 96))
+    pygame.draw.rect(DISPLAYSURF, DARKGREY, (0, 163+80 , 127, 24))
+    pygame.draw.rect(DISPLAYSURF, OFFGREY,  (0, 163+80+24 , 127, 96))
 
-    pygame.draw.rect(DISPLAYSURF, DARKGREY, (0, 183+160, 127, 24))
+    pygame.draw.rect(DISPLAYSURF, DARKGREY, (0, 203+160, 127, 24))
 
     DISPLAYSURF.blit(NEW_SURF, NEW_RECT)
     DISPLAYSURF.blit(SOLVE_SURF, SOLVE_RECT)
     DISPLAYSURF.blit(RESET_SURF, RESET_RECT)
-    for x in range(4): 
+    for x in range(7): 
         sizes_group.buttons[x].draw()
     for x in range(3):
         sol_group.buttons[x].draw()
@@ -191,34 +192,41 @@ def makeText(text, color, font, top, left):
 def drawGameOptions():
     global DISPLAYSURF, BASICFONT, SECFONT, SECFONT2, FONT, sizes_group, sol_group, RESET_SURF, RESET_RECT, NEW_SURF, NEW_RECT, SOLVE_SURF, SOLVE_RECT, SIZE_SURF, SIZE_RECT, SOL_SURF, SOL_RECT, GAMESIZE
     # Store the option buttons and their rectangles in OPTIONS.
-    NEW_SURF,   NEW_RECT   = makeText('  New Game ',       TEXT, FONT, 0, 100)
-    SOLVE_SURF, SOLVE_RECT = makeText('  Solve         ',  TEXT, FONT, 0, 146+80)
-    RESET_SURF, RESET_RECT = makeText('  Reset         ',  TEXT, FONT, 0, 186+160)
+    NEW_SURF,   NEW_RECT   = makeText('  New Game ',       TEXT, FONT, 0, 50)
+    SOLVE_SURF, SOLVE_RECT = makeText('  Solve         ',  TEXT, FONT, 0, 166+80)
+    RESET_SURF, RESET_RECT = makeText('  Reset         ',  TEXT, FONT, 0, 206+160)
     
     # Board sizes options 
-    sizes_group = buttonGroup(127, SECFONT2)
+    sizes_group = buttonGroup(77, SECFONT2)
     SIZE_SURF = []
     SIZE_RECT = []
-    for x in range(4):
-        sizes_group.buttons.append(button(sizes_group, str(x+3)+' x '+str(x+3)))
+    for x in range(7):
+        sizes_group.buttons.append(button(sizes_group, '          '+str(x+3)+' x '+str(x+3), str(x+3)))
         s_surf, s_rect = sizes_group.buttons[x].draw()
         SIZE_SURF.append(s_surf)
         SIZE_RECT.append(s_rect)
+    
+    sizes_group.buttons[0].select()
 
     # Solving Techniques options
-    sol_group = buttonGroup(252, SECFONT3)
+    sol_group = buttonGroup(272, SECFONT3)
     SOL_SURF = []
     SOL_RECT = []
     sol_techniques=[]
     sol_techniques.append(' Backtracking')
     sol_techniques.append(' BT w/ Forward Check.')
     sol_techniques.append(' BT w/ Arc Consist.') 
+    sign = []
+    sign.append('BT')
+    sign.append('FC')
+    sign.append('AC')
     for x in range(3):
-        sol_group.buttons.append(button(sol_group, sol_techniques[x]))
+        sol_group.buttons.append(button(sol_group, sol_techniques[x], sign[x]))
         s_surf, s_rect = sol_group.buttons[x].draw()
         SOL_SURF.append(s_surf)
         SOL_RECT.append(s_rect)
-        sol_group.buttons[0].select()
+
+    sol_group.buttons[0].select()
 
 class buttonGroup():
     def __init__(self, start_pos, font):
@@ -228,15 +236,16 @@ class buttonGroup():
 
 class button():
     # global SIZE_SURF, SIZE_RECT
-    def __init__(self, parent, text):
+    def __init__(self, parent, text, sign):
         self.parent = parent
         self.text = text
+        self.sign = sign
         self.selected = False
         self.s_surf, self.s_rect = makeText(self.text, DARKGREY, self.parent.font, 5, self.parent.start_pos)
         self.pos = self.parent.start_pos
         self.parent.start_pos += 24
         self.draw()
-
+        
     def select(self):
         for x in self.parent.buttons: x.selected = False
         self.selected = True
@@ -256,10 +265,33 @@ class button():
         DISPLAYSURF.blit(self.s_surf, self.s_rect)
         return (self.s_surf, rect)
     
+    def press(self):
+        global GAME, GAMESIZE, CAGES, CONSTRAINTS, TECHNIQUE, HEURISTIC, GAMEDISPLAYED, DISPLAYSURF
+        self.select()
+        if len(self.sign) == 2:
+            TECHNIQUE = self.sign
+            solved, a_ = solveGame(GAMESIZE, CAGES, CONSTRAINTS, TECHNIQUE, HEURISTIC)
+            GAMEDISPLAYED = solved
+            print(solved)
+            pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND)
+        else:
+            # New game
+            GAMESIZE = int(self.sign)
+            print(GAMESIZE)
+            GAME, CAGES, CONSTRAINTS = generateNewGame(GAMESIZE)
+            GAMEDISPLAYED = None
+            WINDOWWIDTH = GAMESIZE * TILESIZE + 250
+            WINDOWHEIGHT = GAMESIZE * TILESIZE + 200
+            DISPLAYSURF = pygame.display.set_mode((WINDOWWIDTH, WINDOWHEIGHT), RESIZABLE)
+            drawBoard(GAMESIZE, GAMEDISPLAYED, CAGES, CONSTRAINTS)
+            pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND)
+    
     def hover(self):
         pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND) 
         for x in range(len(sol_group.buttons)):
             sol_group.buttons[x].draw()
+        for x in range(len(sizes_group.buttons)):
+            sizes_group.buttons[x].draw()
         pygame.draw.rect(DISPLAYSURF, OPHOV, (0, self.pos-5 , 127, 24))
         DISPLAYSURF.blit(self.s_surf, self.s_rect)
         pygame.display.update()
@@ -295,6 +327,21 @@ def eventHandler():
                 GAME, CAGES, CONSTRAINTS = generateNewGame(GAMESIZE)
                 GAMEDISPLAYED = None
                 pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND)
+            elif SIZE_RECT[0].collidepoint(pos):
+                sizes_group.buttons[0].press()
+            elif SIZE_RECT[1].collidepoint(pos):
+                sizes_group.buttons[1].press()
+            elif SIZE_RECT[2].collidepoint(pos):
+                sizes_group.buttons[2].press()
+            elif SIZE_RECT[3].collidepoint(pos):
+                sizes_group.buttons[3].press()
+            elif SIZE_RECT[4].collidepoint(pos):
+                sizes_group.buttons[4].press()
+            elif SIZE_RECT[5].collidepoint(pos):
+                sizes_group.buttons[5].press()
+            elif SIZE_RECT[6].collidepoint(pos):
+                sizes_group.buttons[6].press()
+            
 
             #_____Solve and techniques
             # Solve game
@@ -307,28 +354,13 @@ def eventHandler():
                 pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND)
             # Backtracking
             elif SOL_RECT[0].collidepoint(pos):
-                sol_group.buttons[0].select()
-                TECHNIQUE = 'BT'
-                solved, a_ = solveGame(GAMESIZE, CAGES, CONSTRAINTS, TECHNIQUE, HEURISTIC)
-                GAMEDISPLAYED = solved
-                print(solved)
-                pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND)
+                sol_group.buttons[0].press()
             # BT with Forward Checking 
             elif SOL_RECT[1].collidepoint(pos):
-                sol_group.buttons[1].select()
-                TECHNIQUE = 'FC'
-                solved, a_ = solveGame(GAMESIZE, CAGES, CONSTRAINTS, TECHNIQUE, HEURISTIC)
-                GAMEDISPLAYED = solved
-                print(solved)
-                pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND)
+                sol_group.buttons[1].press()
             # BT with Arc Consistency
             elif SOL_RECT[2].collidepoint(pos):
-                sol_group.buttons[2].select()
-                TECHNIQUE = 'AC'
-                solved, a_ = solveGame(GAMESIZE, CAGES, CONSTRAINTS, TECHNIQUE, HEURISTIC)
-                GAMEDISPLAYED = solved
-                print(solved)
-                pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND)
+                sol_group.buttons[2].press()
 
             #_____Reset
             elif RESET_RECT.collidepoint(pos):
@@ -349,15 +381,15 @@ def eventHandler():
             if HOVERTILE != None: drawBoard(GAMESIZE, GAMEDISPLAYED, CAGES, CONSTRAINTS)
             ## check if cursor is on button ##
             if NEW_RECT.collidepoint(pos):
-                pygame.draw.rect(DISPLAYSURF, BUTTONHOVER, (0, 97     , 127, 24))
+                pygame.draw.rect(DISPLAYSURF, BUTTONHOVER, (0, 47     , 127, 24))
                 DISPLAYSURF.blit(NEW_SURF, NEW_RECT)
                 pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND)
             elif SOLVE_RECT.collidepoint(pos):
-                pygame.draw.rect(DISPLAYSURF, BUTTONHOVER , (0, 143+80 , 127, 24))
+                pygame.draw.rect(DISPLAYSURF, BUTTONHOVER , (0, 163+80 , 127, 24))
                 DISPLAYSURF.blit(SOLVE_SURF, SOLVE_RECT)
                 pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND)
             elif RESET_RECT.collidepoint(pos):
-                pygame.draw.rect(DISPLAYSURF, BUTTONHOVER, (0, 183+160, 127, 24))
+                pygame.draw.rect(DISPLAYSURF, BUTTONHOVER, (0, 203+160, 127, 24))
                 DISPLAYSURF.blit(RESET_SURF, RESET_RECT)   
                 pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND) 
             elif SOL_RECT[0].collidepoint(pos):
@@ -366,11 +398,26 @@ def eventHandler():
                 sol_group.buttons[1].hover()
             elif SOL_RECT[2].collidepoint(pos):
                 sol_group.buttons[2].hover()
+            elif SIZE_RECT[0].collidepoint(pos):
+                sizes_group.buttons[0].hover()
+            elif SIZE_RECT[1].collidepoint(pos):
+                sizes_group.buttons[1].hover()
+            elif SIZE_RECT[2].collidepoint(pos):
+                sizes_group.buttons[2].hover()
+            elif SIZE_RECT[3].collidepoint(pos):
+                sizes_group.buttons[3].hover()
+            elif SIZE_RECT[4].collidepoint(pos):
+                sizes_group.buttons[4].hover()
+            elif SIZE_RECT[5].collidepoint(pos):
+                sizes_group.buttons[5].hover()
+            elif SIZE_RECT[6].collidepoint(pos):
+                sizes_group.buttons[6].hover()
+           
                 # return
             else :
-                pygame.draw.rect(DISPLAYSURF, DARKGREY, (0, 97     , 127, 24))
-                pygame.draw.rect(DISPLAYSURF, DARKGREY , (0, 143+80 , 127, 24))
-                pygame.draw.rect(DISPLAYSURF, DARKGREY, (0, 183+160, 127, 24))
+                pygame.draw.rect(DISPLAYSURF, DARKGREY, (0, 47     , 127, 24))
+                pygame.draw.rect(DISPLAYSURF, DARKGREY , (0, 163+80 , 127, 24))
+                pygame.draw.rect(DISPLAYSURF, DARKGREY, (0, 203+160, 127, 24))
                 DISPLAYSURF.blit(NEW_SURF, NEW_RECT)
                 DISPLAYSURF.blit(SOLVE_SURF, SOLVE_RECT)
                 DISPLAYSURF.blit(RESET_SURF, RESET_RECT)
