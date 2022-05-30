@@ -74,7 +74,7 @@ def main():
     BASICFONT = pygame.font.Font('freesansbold.ttf', BASICFONTSIZE)
     SECFONT = pygame.font.Font('freesansbold.ttf', SECFONTSIZE)
     SECFONT2 = pygame.font.Font(None, SECFONTSIZE + 7)
-    SECFONT3 = pygame.font.Font('freesansbold.ttf', SECFONTSIZE-2)
+    SECFONT3 = pygame.font.Font('freesansbold.ttf', SECFONTSIZE-3)
     FONT = BASICFONT
 
     drawGameOptions()
@@ -161,7 +161,7 @@ def drawBoard(n, game, cages, constraints):
     
     # Draw game controlers
     pygame.draw.rect(DISPLAYSURF, DARKGREY, (0, 97     , 127, 24))
-    pygame.draw.rect(DISPLAYSURF, OFFGREY,  (0, 97+24  , 127, 96))
+    pygame.draw.rect(DISPLAYSURF, OFFGREY,  (0, 97+24  , 127, 102))
 
     pygame.draw.rect(DISPLAYSURF, DARKGREY, (0, 143+80 , 127, 24))
     pygame.draw.rect(DISPLAYSURF, OFFGREY,  (0, 143+80+24 , 127, 96))
@@ -210,9 +210,9 @@ def drawGameOptions():
     SOL_SURF = []
     SOL_RECT = []
     sol_techniques=[]
-    sol_techniques.append('Backtracking               ')
-    sol_techniques.append('BT w/ Forward Check.')
-    sol_techniques.append('BT w/ Arc Consist.      ') 
+    sol_techniques.append(' Backtracking')
+    sol_techniques.append(' BT w/ Forward Check.')
+    sol_techniques.append(' BT w/ Arc Consist.') 
     for x in range(3):
         sol_group.buttons.append(button(sol_group, sol_techniques[x]))
         s_surf, s_rect = sol_group.buttons[x].draw()
@@ -243,23 +243,23 @@ class button():
 
     def draw(self):
         if self.selected:
-            pygame.draw.rect(DISPLAYSURF, OPSEL, (0, self.pos , 127, 24))
+            rect = pygame.draw.rect(DISPLAYSURF, OPSEL, (0, self.pos-5, 127, 24))
             DISPLAYSURF.blit(self.s_surf, self.s_rect )    
             pygame.display.update()
         else:
-            pygame.draw.rect(DISPLAYSURF, OFFGREY, (0, self.pos , 127, 24))
+            rect = pygame.draw.rect(DISPLAYSURF, OFFGREY, (0, self.pos-5 , 127, 24))
             DISPLAYSURF.blit(self.s_surf, self.s_rect )    
             pygame.display.update()
             ...
 
         DISPLAYSURF.blit(self.s_surf, self.s_rect)
-        return (self.s_surf, self.s_rect)
+        return (self.s_surf, rect)
     
     def hover(self):
         pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND) 
         for x in range(len(sol_group.buttons)):
             sol_group.buttons[x].draw()
-        pygame.draw.rect(DISPLAYSURF, OPHOV, (0, self.pos , 127, 24))
+        pygame.draw.rect(DISPLAYSURF, OPHOV, (0, self.pos-5 , 127, 24))
         for x in range(len(sol_group.buttons)):
             DISPLAYSURF.blit(sol_group.buttons[x].s_surf, sol_group.buttons[x].s_rect)
         pygame.display.update()
