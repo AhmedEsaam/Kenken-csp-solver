@@ -22,8 +22,8 @@ WHITE =         (255, 255, 255)
 DARKGREY =      ( 55,  58,  64)
 GREY =          (115, 119, 123)
 OFFGREY =       (238, 238, 238)
-GREY1 =         (170, 170, 170)
-GREY2 =         (191, 191, 191)
+GREY1 =         (190, 190, 190)
+GREY2 =         (215, 215, 215)
 BRIGHTBLUE =    (  0,  50, 255)
 DARKTURQUOISE = (  3,  54,  73)
 BLUE =          (  0,  50, 255)
@@ -206,7 +206,7 @@ def drawGameOptions():
         SIZE_RECT.append(s_rect)
 
     # Solving Techniques options
-    sol_group = buttonGroup(257, SECFONT3)
+    sol_group = buttonGroup(252, SECFONT3)
     SOL_SURF = []
     SOL_RECT = []
     sol_techniques=[]
@@ -218,6 +218,7 @@ def drawGameOptions():
         s_surf, s_rect = sol_group.buttons[x].draw()
         SOL_SURF.append(s_surf)
         SOL_RECT.append(s_rect)
+        sol_group.buttons[0].select()
 
 class buttonGroup():
     def __init__(self, start_pos, font):
@@ -244,11 +245,11 @@ class button():
     def draw(self):
         if self.selected:
             rect = pygame.draw.rect(DISPLAYSURF, OPSEL, (0, self.pos-5, 127, 24))
-            DISPLAYSURF.blit(self.s_surf, self.s_rect )    
+            # DISPLAYSURF.blit(self.s_surf, self.s_rect )    
             pygame.display.update()
         else:
             rect = pygame.draw.rect(DISPLAYSURF, OFFGREY, (0, self.pos-5 , 127, 24))
-            DISPLAYSURF.blit(self.s_surf, self.s_rect )    
+            # DISPLAYSURF.blit(self.s_surf, self.s_rect )    
             pygame.display.update()
             ...
 
@@ -260,8 +261,7 @@ class button():
         for x in range(len(sol_group.buttons)):
             sol_group.buttons[x].draw()
         pygame.draw.rect(DISPLAYSURF, OPHOV, (0, self.pos-5 , 127, 24))
-        for x in range(len(sol_group.buttons)):
-            DISPLAYSURF.blit(sol_group.buttons[x].s_surf, sol_group.buttons[x].s_rect)
+        DISPLAYSURF.blit(self.s_surf, self.s_rect)
         pygame.display.update()
 
     
@@ -374,10 +374,10 @@ def eventHandler():
                 DISPLAYSURF.blit(NEW_SURF, NEW_RECT)
                 DISPLAYSURF.blit(SOLVE_SURF, SOLVE_RECT)
                 DISPLAYSURF.blit(RESET_SURF, RESET_RECT)
-                for x in range(4): 
-                    sizes_group.buttons[x].draw()
-                for x in range(3):
-                    sol_group.buttons[x].draw()
+                # for x in range(4): 
+                #     sizes_group.buttons[x].draw()
+                # for x in range(3):
+                #     sol_group.buttons[x].draw()
                 pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_ARROW)
 
             pygame.display.update()
