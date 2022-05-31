@@ -1,3 +1,4 @@
+from pickle import FALSE
 import queue
 import random
 import copy
@@ -447,6 +448,7 @@ def solveGame(GAMESIZE_, CAGES_, CONSTRAINTS_, technique_, heuristic_): # TO BE 
     cages_h=copy.deepcopy(CAGES)
     if heuristic_ == 'MCV': 
         cages_h.sort(key = len, reverse = True)
+
     temp=[]
     for cage in cages_h :
         for cell in cage :

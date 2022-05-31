@@ -3,7 +3,7 @@ from new_game import generateNewGame
 from solving import solveGame
 from csv import writer
 
-file = open('out2.csv', 'w')
+file = open('Analysis2.csv', 'w')
 writer = writer(file, dialect='excel')
 writer.writerow(["Technique", "Size", "Assignments", "time_elapsed"])
 

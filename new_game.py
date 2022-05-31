@@ -24,8 +24,8 @@ def cagesCreator(GAMESIZE):
         if rand_num < 30: cageSize = 2
         if GAMESIZE > 5: #5
             if rand_num < 30: cageSize = 1
-            elif rand_num < 80: cageSize = 2
-            elif rand_num < 95: cageSize = 3
+            elif rand_num < 90: cageSize = 2
+            elif rand_num < 99: cageSize = 3
         
         for i in range(cageSize-1):
             x = seed[0]
