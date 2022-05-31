@@ -34,7 +34,6 @@ BROWN =         (232, 201, 126)
 OFFGREEN =      (157, 204, 145)
 OFFGREEN2 =     (177, 230, 147)
 
-
 BGCOLOR = DARKGREEN2
 TILECOLOR = WHITE
 HOVERCOLOR = YELLOW
@@ -55,7 +54,6 @@ MESSAGECOLOR = WHITE
 XMARGIN = int((WINDOWWIDTH - (TILESIZE * BOARDWIDTH + (BOARDWIDTH - 1))) / 2)
 # YMARGIN = int((WINDOWHEIGHT - (TILESIZE * BOARDHEIGHT + (BOARDHEIGHT - 1))) / 2)
 YMARGIN = 80
-
 
 
 def main():
@@ -291,6 +289,7 @@ class button():
             solved, a_ = solveGame(GAMESIZE, CAGES, CONSTRAINTS, TECHNIQUE, HEURISTIC)
             GAMEDISPLAYED = solved
             print(solved)
+            print(TECHNIQUE, ' ', HEURISTIC)
             pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND)
         elif len(self.sign) == 2:
             # TECHNIQUE
@@ -298,6 +297,7 @@ class button():
             solved, a_ = solveGame(GAMESIZE, CAGES, CONSTRAINTS, TECHNIQUE, HEURISTIC)
             GAMEDISPLAYED = solved
             print(solved)
+            print(TECHNIQUE, ' ', HEURISTIC)
             pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND)
         else:
             # New game
@@ -307,7 +307,8 @@ class button():
             GAMEDISPLAYED = None
             if (pygame.display.get_window_size()[0] < 881):
                 WINDOWWIDTH = GAMESIZE * TILESIZE + 250
-                WINDOWHEIGHT = GAMESIZE * TILESIZE + 250
+                WINDOWHEIGHT = GAMESIZE * TILESIZE + 160
+                if WINDOWHEIGHT < 460 : WINDOWHEIGHT = 460
                 DISPLAYSURF = pygame.display.set_mode((WINDOWWIDTH, WINDOWHEIGHT), RESIZABLE)
             drawBoard(GAMESIZE, GAMEDISPLAYED, CAGES, CONSTRAINTS)
             pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND)

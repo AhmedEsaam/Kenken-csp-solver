@@ -11,7 +11,7 @@ techniques = ['BT', 'FC', 'AC']
 heuristics = ['None', 'MCV']  # MCV: Most Constraining Variable
 MAX_SIZE = 9
 
-for n in range(8, MAX_SIZE):
+for n in range(2, MAX_SIZE):
     for i in range(3):
          # Generate new game
         size = n+1
