@@ -3,16 +3,16 @@ from new_game import generateNewGame
 from solving import solveGame
 from csv import writer
 
-file = open('out.csv', 'w')
+file = open('out2.csv', 'w')
 writer = writer(file, dialect='excel')
 writer.writerow(["Technique", "Size", "Assignments", "time_elapsed"])
 
 techniques = ['BT', 'FC', 'AC']
 heuristics = ['None', 'MCV']  # MCV: Most Constraining Variable
-MAX_SIZE = 4
+MAX_SIZE = 9
 
-for n in range(1, MAX_SIZE):
-    for i in range(2):
+for n in range(8, MAX_SIZE):
+    for i in range(3):
          # Generate new game
         size = n+1
         game, cages, constraints = generateNewGame(size)

@@ -1,8 +1,4 @@
-from asyncio.windows_events import NULL
-from audioop import reverse
-import queue
 import random
-from xmlrpc.client import INVALID_XMLRPC
 import copy
 
 global GAMESIZE, CAGES, CONSTRAINTS, technique #,square_domains
@@ -244,7 +240,7 @@ def CSP_BACKTRACKING(Assignment, square_domains):
     #########################
     #assign value from square domains
     # print('\n')
-    random.shuffle(square_domains[row][col])
+    # random.shuffle(square_domains[row][col])
 
     #domain_before store the domain before being changed
     cell_index_before = cell_index
@@ -361,8 +357,9 @@ def CSP_BACKTRACKING(Assignment, square_domains):
             
             elif (technique=="AC" and valid_Assignment == True):
                 x = [row,col]
-                consistency,square_domains = arc_consistency(square_domains, x , v, op, constraint_value, idx_, cell_idx_, res, Assignment)
-                if not consistency:
+                consistency,domains = arc_consistency(square_domains, x , v, op, constraint_value, idx_, cell_idx_, res, Assignment)
+                square_domains = domains
+                if consistency == False:
                     valid_Assignment == False                    
 
         #Check valid_Assignment (all constraints except if the cage is not full assign true) -------------------------------------------------------------------------
@@ -412,7 +409,7 @@ def CSP_BACKTRACKING(Assignment, square_domains):
     Assignment[row_before][col_before] = 0
     #the failure indicate termination of this process so we have to get back to the root of recursion and try different values
     # print('failure')
-    
+
     return 'failure'
 
 
@@ -435,7 +432,7 @@ def solveGame(GAMESIZE_, CAGES_, CONSTRAINTS_, technique_, heuristic_): # TO BE 
     global cell_index
     global neighbors
     cell_index=0
-    cages_h=CAGES.copy()
+    cages_h=copy.deepcopy(CAGES)
     if heuristic_ == 'MCV': 
         cages_h.sort(key = len, reverse = True)
     temp=[]
@@ -499,8 +496,6 @@ def solveGame(GAMESIZE_, CAGES_, CONSTRAINTS_, technique_, heuristic_): # TO BE 
 
  
 
-
-           
 ''' 3*3 test example 
 Assignment, _ =  solveGame(3, [[[3, 2], [3, 3], [2, 3]], [[1, 2], [1, 3]], [[2, 1], [2, 2]], [[3, 1]], [[1, 1]]]\
      , [{'topleft': [2, 3], 'op': 'x', 'constraint_value': 4}, {'topleft': [1, 2], 'op': 'x', 'constraint_value': 3}, {'topleft': [2, 1], 'op': '÷', 'constraint_value': 3}, {'topleft': [3, 1], 'op': ' ', 'constraint_value': 3}, {'topleft': [1, 1], 'op': ' ', 'constraint_value': 2}]\
