@@ -20,11 +20,12 @@ def cagesCreator(GAMESIZE):
         positions.remove(seed)
         # determine how frequent ecah cage size occurs 
         cageSize = random.randint(2,4)
-        # rand_num = random.randint(1,100)
-        # if rand_num < 50: cageSize = 4
-        # if rand_num < 96: cageSize = 3
-        # if rand_num < 55: cageSize = 2
-        # if rand_num < 2: cageSize = 1
+        rand_num = random.randint(1,100)
+        if rand_num < 30: cageSize = 2
+        if GAMESIZE > 5: #5
+            if rand_num < 30: cageSize = 1
+            elif rand_num < 90: cageSize = 2
+            elif rand_num < 99: cageSize = 3
         
         for i in range(cageSize-1):
             x = seed[0]

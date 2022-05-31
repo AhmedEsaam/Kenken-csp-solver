@@ -13,4 +13,8 @@ similarily assign values from the domain until it is done , but whenever it assi
 1- First constraint : No repeated values in same row and cloumn . <br>
 2- Second constraint : the operation made on the cage satisfy the condition . <br> <br>
 
-### 3- Backtracking with arc consistency  : <br>
+## 3- Backtracking with arc consistency  : <br>
+At every assignment, exclude any value in the domain which has not a value in the other end of the constraint that both satisfy it.
+We check the two ends of binary constraints which include:
+- No repeated values in same row and cloumn.
+- Each two ends' domains of 2-sized cages satisfy the constraint value and operation.
