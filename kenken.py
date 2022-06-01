@@ -1,4 +1,5 @@
 # Import the pygame module
+from time import time
 import pygame, sys
  
 # Import pygame.locals for easier access to key coordinates
@@ -57,7 +58,7 @@ YMARGIN = 80
 
 
 def main():
-    global DISPLAYSURF, BASICFONT, SECFONT, SECFONT2, SECFONT3, FONT, RESET_SURF, RESET_RECT, NEW_SURF, NEW_RECT, SOLVE_SURF, SOLVE_RECT, SIZE_SURF, SIZE_RECT, SOL_SURF, SOL_RECT, GAMESIZE
+    global DISPLAYSURF, BASICFONT, SECFONT, SECFONT2, SECFONT3, SECFONT4, FONT, RESET_SURF, RESET_RECT, NEW_SURF, NEW_RECT, SOLVE_SURF, SOLVE_RECT, SIZE_SURF, SIZE_RECT, SOL_SURF, SOL_RECT, GAMESIZE
     global GAME, CAGES, CONSTRAINTS
     global TECHNIQUE, HEURISTIC
     pygame.init()
@@ -73,6 +74,7 @@ def main():
     SECFONT = pygame.font.Font('freesansbold.ttf', SECFONTSIZE)
     SECFONT2 = pygame.font.Font(None, SECFONTSIZE + 7)
     SECFONT3 = pygame.font.SysFont('bahnschrift',  SECFONTSIZE-2, bold = False)
+    SECFONT4 = pygame.font.SysFont('bahnschrift',  SECFONTSIZE+1, bold = False)
     FONT = BASICFONT
 
     drawGameOptions()
@@ -123,12 +125,19 @@ GAMEDISPLAYED = None
 
 def drawBoard(n, game, cages, constraints):
     global HOVERTILE, PRESSEDTILE, TILES, TILESPOS
-    global DISPLAYSURF, BASICFONT, SECFONT, SECFONT2, FONT, sizes_group, sol_group, heu_group, RESET_SURF, RESET_RECT, NEW_SURF, NEW_RECT, SOLVE_SURF, SOLVE_RECT, SIZE_SURF, SIZE_RECT, SOL_SURF, SOL_RECT, GAMESIZE
+    global DISPLAYSURF, BASICFONT, SECFONT, SECFONT2, FONT, sizes_group, sol_group, heu_group, a_, time_elapsed, RESET_SURF, RESET_RECT, NEW_SURF, NEW_RECT, SOLVE_SURF, SOLVE_RECT, SIZE_SURF, SIZE_RECT, SOL_SURF, SOL_RECT, GAMESIZE
     DISPLAYSURF.fill(OFFGREEN)
-    # if message:
-    #     textSurf, textRect = makeText(message, MESSAGECOLOR, BGCOLOR, 5, 5)
-    #     DISPLAYSURF.blit(textSurf, textRect)
 
+    # Display solving data
+    ASSIGN_SURF,   ASSIGN_RECT   = makeText(' No. of Assignments : ', DARKGREY, SECFONT, 180, GAMESIZE*TILESIZE+106)
+    DISPLAYSURF.blit(ASSIGN_SURF, ASSIGN_RECT)
+    TIME_SURF,   TIME_RECT   = makeText(' Time taken : ', DARKGREY, SECFONT, 180, GAMESIZE*TILESIZE+131)
+    DISPLAYSURF.blit(TIME_SURF, TIME_RECT)
+    A_SURF,   A_RECT   = makeText(str(a_), DARKGREY, SECFONT4, 340, GAMESIZE*TILESIZE+104)
+    DISPLAYSURF.blit(A_SURF, A_RECT)
+    T_SURF,   T_RECT   = makeText(str(round(time_elapsed, 6)), DARKGREY, SECFONT4, 279, GAMESIZE*TILESIZE+129)
+    DISPLAYSURF.blit(T_SURF, T_RECT)
+    
     # Draw tiles
     for tiley in range(n):
         for tilex in range(n):
@@ -281,12 +290,14 @@ class button():
         return (self.s_surf, rect)
     
     def press(self):
-        global GAME, GAMESIZE, CAGES, CONSTRAINTS, TECHNIQUE, HEURISTIC, GAMEDISPLAYED, DISPLAYSURF
+        global GAME, GAMESIZE, CAGES, CONSTRAINTS, TECHNIQUE, HEURISTIC, GAMEDISPLAYED, DISPLAYSURF, a_, time_elapsed
         self.select()
         if len(self.sign) == 3:
             # HEURISTIC
             HEURISTIC = self.sign
+            t = time()
             solved, a_ = solveGame(GAMESIZE, CAGES, CONSTRAINTS, TECHNIQUE, HEURISTIC)
+            time_elapsed = time() - t
             GAMEDISPLAYED = solved
             print(solved)
             print(TECHNIQUE, ' ', HEURISTIC)
@@ -294,20 +305,24 @@ class button():
         elif len(self.sign) == 2:
             # TECHNIQUE
             TECHNIQUE = self.sign
+            t = time()
             solved, a_ = solveGame(GAMESIZE, CAGES, CONSTRAINTS, TECHNIQUE, HEURISTIC)
+            time_elapsed = time() - t
             GAMEDISPLAYED = solved
             print(solved)
             print(TECHNIQUE, ' ', HEURISTIC)
             pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND)
         else:
             # New game
+            a_ = 0
+            time_elapsed = 0
             GAMESIZE = int(self.sign)
             print(GAMESIZE)
             GAME, CAGES, CONSTRAINTS = generateNewGame(GAMESIZE)
             GAMEDISPLAYED = None
             if (pygame.display.get_window_size()[0] < 881):
                 WINDOWWIDTH = GAMESIZE * TILESIZE + 250
-                WINDOWHEIGHT = GAMESIZE * TILESIZE + 160
+                WINDOWHEIGHT = GAMESIZE * TILESIZE + 180
                 if WINDOWHEIGHT < 460 : WINDOWHEIGHT = 460
                 DISPLAYSURF = pygame.display.set_mode((WINDOWWIDTH, WINDOWHEIGHT), RESIZABLE)
             drawBoard(GAMESIZE, GAMEDISPLAYED, CAGES, CONSTRAINTS)
@@ -329,12 +344,14 @@ class button():
         
 # Event Handler__________________________________________________________
 
-global val
+global val, a_, time_elapsed
+time_elapsed = 0
+a_ = 0
 val = -1
 def eventHandler():
     global GAME, CAGES, CONSTRAINTS, HOVERTILE, PRESSEDTILE, TILES, TILESPOS, GAMEDISPLAYED
     global GAMEDISPLAYED, val, PRESSEDTILE, sizes_group, sol_group, heu_group
-    global TECHNIQUE, HEURISTIC
+    global TECHNIQUE, HEURISTIC, a_, time_elapsed
     val = -1
     for event in pygame.event.get():
         ## get position of cursor
@@ -375,7 +392,9 @@ def eventHandler():
             # Solve game
             elif SOLVE_RECT.collidepoint(pos):
                 # solved = GAME  # comment
+                t = time()
                 solved, a_ = solveGame(GAMESIZE, CAGES, CONSTRAINTS, TECHNIQUE, HEURISTIC)
+                time_elapsed = time() - t
                 GAMEDISPLAYED = solved
                 print(solved)
                 print(TECHNIQUE, ' ', HEURISTIC)
@@ -399,6 +418,8 @@ def eventHandler():
             elif RESET_RECT.collidepoint(pos):
                 # Reset game
                 GAMEDISPLAYED = None
+                a_ = 0
+                time_elapsed = 0
                 pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND)
 
             drawBoard(GAMESIZE, GAMEDISPLAYED, CAGES, CONSTRAINTS)
@@ -465,7 +486,7 @@ def eventHandler():
                 # for x in range(3):
                 #     sol_group.buttons[x].draw()
                 pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_ARROW)
-
+            
             pygame.display.update()
 
         # Key handler______________________________________________________
