@@ -22,3 +22,8 @@ At every assignment, exclude any value in the domain which has not a value in th
 We check the two ends of binary constraints which include:
 - No repeated values in same row and cloumn.
 - Each two ends' domains of 2-sized cages satisfy the constraint value and operation.
+
+## Heuristic : <br> <br>
+###1- Most Constrained Variable : <br>
+it sorts the cage within the length criteria of each cage and solve them in the recursive Backtrack function . <br>
+which means it solve the cage of the smallest length first and then the greater and the greater and so on until it finds the solution .
