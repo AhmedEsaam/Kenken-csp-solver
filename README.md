@@ -24,6 +24,6 @@ We check the two ends of binary constraints which include:
 - Each two ends' domains of 2-sized cages satisfy the constraint value and operation.
 
 ## Heuristic : <br> <br>
-1- Most Constrained Variable : <br>
+### Most Constrained Variable : <br>
 it sorts the cage within the length criteria of each cage and solve them in the recursive Backtrack function . <br>
 which means it solve the cage of the smallest length first and then the greater and the greater and so on until it finds the solution .
