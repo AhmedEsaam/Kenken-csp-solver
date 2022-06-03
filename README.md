@@ -25,5 +25,5 @@ We check the two ends of binary constraints which include:
 
 ## Heuristic : <br>
 ### Most Constrained Variable : <br>
-it sorts the cage within the length criteria of each cage and solve them in the recursive Backtrack function . <br>
-which means it solve the cage of the smallest length first and then the greater and the greater and so on until it finds the solution .
+It sorts the cage within the length criteria of each cage and solve them in the recursive Backtrack function . <br>
+Which means it solve the cage of the smallest length first and then the greater and the greater and so on until it finds the solution .
