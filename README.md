@@ -1,5 +1,5 @@
 # Kenken-csp-solver
-Exploring ho to solve Kenken games using CSP techniques.<br>
+Exploring how to solve Kenken games using CSP techniques.<br>
 
 ## How to run
 Run the kenken.py file by python:
